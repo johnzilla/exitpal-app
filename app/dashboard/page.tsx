@@ -16,10 +16,10 @@ import { useAuth } from "@/components/auth-provider";
 import { 
   ScheduledMessage, 
   scheduleMessage, 
-  getMessagesByUserId,
   cancelMessage,
   getDefaultTwilioNumber,
-  MessageType
+  MessageType,
+  subscribeToMessages
 } from "@/lib/message-service";
 import {
   Table,
@@ -37,7 +37,9 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -51,6 +53,7 @@ export default function DashboardPage() {
   const [messages, setMessages] = useState<ScheduledMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isClient, setIsClient] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string>("");
   
@@ -81,12 +84,29 @@ export default function DashboardPage() {
         setFormData(prev => ({ ...prev, phoneNumber: user.phone! }));
       }
       
-      // Load user's scheduled messages
-      const userMessages = getMessagesByUserId(user.id);
-      setMessages(userMessages);
-      setIsLoading(false);
+      // Subscribe to real-time message updates
+      const unsubscribe = subscribeToMessages(user.id, (updatedMessages) => {
+        setMessages(updatedMessages);
+        setIsLoading(false);
+        setIsConnected(true);
+      });
+
+      // Handle connection errors
+      const handleConnectionError = () => {
+        setIsConnected(false);
+        toast({
+          variant: "destructive",
+          title: "Connection lost",
+          description: "Trying to reconnect to the database..."
+        });
+      };
+
+      // Cleanup subscription on unmount
+      return () => {
+        unsubscribe();
+      };
     }
-  }, [user, router, isClient]);
+  }, [user, router, isClient, toast]);
 
   // Don't render anything until client-side hydration is complete
   if (!isClient) {
@@ -164,9 +184,9 @@ export default function DashboardPage() {
     }
     
     try {
-      const twilioNumber = getDefaultTwilioNumber();
+      setIsLoading(true);
       
-      const newMessage = await scheduleMessage({
+      await scheduleMessage({
         userId: user.id,
         contactName: formData.contactName,
         messageContent: formData.messageContent,
@@ -175,9 +195,6 @@ export default function DashboardPage() {
         messageType: formData.messageType,
         status: 'pending'
       });
-      
-      // Update the messages list
-      setMessages(prev => [...prev, newMessage]);
       
       toast({
         title: "Message scheduled",
@@ -199,25 +216,34 @@ export default function DashboardPage() {
         title: "Failed to schedule message",
         description: "An error occurred. Please try again."
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleCancelMessage = async (messageId: string) => {
     if (!user) return;
     
-    const success = cancelMessage(user.id, messageId);
-    
-    if (success) {
-      setMessages(prev => prev.filter(m => m.id !== messageId));
-      toast({
-        title: "Message canceled",
-        description: "Your scheduled message has been canceled."
-      });
-    } else {
+    try {
+      const success = await cancelMessage(user.id, messageId);
+      
+      if (success) {
+        toast({
+          title: "Message canceled",
+          description: "Your scheduled message has been canceled."
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Failed to cancel message",
+          description: "An error occurred or the message has already been sent."
+        });
+      }
+    } catch (error) {
       toast({
         variant: "destructive",
         title: "Failed to cancel message",
-        description: "An error occurred or the message has already been sent."
+        description: "An error occurred. Please try again."
       });
     }
   };
@@ -238,13 +264,47 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
+      
+      {/* Connection Status Indicator */}
+      <div className={cn(
+        "fixed top-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all",
+        isConnected 
+          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+      )}>
+        {isConnected ? (
+          <>
+            <Wifi className="h-3 w-3" />
+            <span>Connected</span>
+          </>
+        ) : (
+          <>
+            <WifiOff className="h-3 w-3" />
+            <span>Reconnecting...</span>
+          </>
+        )}
+      </div>
+
       <div className="flex-1 container py-24 px-4 md:px-6">
-        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span>Real-time updates</span>
+          </div>
+        </div>
         
         <Tabs defaultValue="schedule" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="schedule">Schedule Message</TabsTrigger>
-            <TabsTrigger value="messages">My Messages</TabsTrigger>
+            <TabsTrigger value="messages">
+              My Messages 
+              {messages.length > 0 && (
+                <span className="ml-2 bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
+                  {messages.length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="schedule">
@@ -369,8 +429,8 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   
-                  <Button type="submit" className="w-full">
-                    Schedule Message
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Scheduling..." : "Schedule Message"}
                   </Button>
                 </form>
               </CardContent>
@@ -380,13 +440,26 @@ export default function DashboardPage() {
           <TabsContent value="messages">
             <Card>
               <CardHeader>
-                <CardTitle>My Scheduled Messages</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>My Scheduled Messages</span>
+                  {isConnected && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span>Live</span>
+                    </div>
+                  )}
+                </CardTitle>
                 <CardDescription>
-                  View and manage your scheduled messages
+                  View and manage your scheduled messages (updates in real-time)
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {messages.length === 0 ? (
+                {isLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="text-muted-foreground mt-2">Loading messages...</p>
+                  </div>
+                ) : messages.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">
                       You don't have any scheduled messages yet.

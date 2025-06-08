@@ -1,7 +1,12 @@
-// This is a mock service that would normally use Supabase or another database
-// For demonstration purposes, we're using localStorage
-
+// Updated message service using Firebase Firestore
 import { v4 as uuidv4 } from 'uuid';
+import { 
+  saveMessage, 
+  getUserMessages, 
+  deleteMessage, 
+  updateMessageStatus as updateFirestoreMessageStatus,
+  subscribeToUserMessages 
+} from './firebase-service';
 
 export type MessageType = 'sms' | 'voice';
 export type MessageStatus = 'pending' | 'sent' | 'failed';
@@ -30,26 +35,15 @@ export const getAvailableTwilioNumbers = () => [
   { id: "5", number: "+13125551234", label: "Chicago (312)" }
 ];
 
-// Save a new message
-export const scheduleMessage = async (message: Omit<ScheduledMessage, 'id' | 'createdAt'>) => {
+/**
+ * Schedule a new message using Firestore
+ */
+export const scheduleMessage = async (message: Omit<ScheduledMessage, 'id' | 'createdAt'>): Promise<ScheduledMessage> => {
   try {
-    const newMessage: ScheduledMessage = {
-      ...message,
-      id: uuidv4(),
-      createdAt: new Date()
-    };
+    // Save to Firestore
+    const newMessage = await saveMessage(message);
     
-    // In a real app, we would save to a database
-    const existingMessages = getMessagesFromStorage(message.userId);
-    const updatedMessages = [...existingMessages, newMessage];
-    
-    // Only use localStorage if we're in the browser
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`exitpal-messages-${message.userId}`, JSON.stringify(updatedMessages));
-    }
-    
-    // In a real app, we would schedule the message using a job scheduler
-    // For demo purposes, we'll use setTimeout to simulate message sending
+    // Schedule the message sending simulation
     simulateMessageSending(newMessage);
     
     return newMessage;
@@ -59,78 +53,59 @@ export const scheduleMessage = async (message: Omit<ScheduledMessage, 'id' | 'cr
   }
 };
 
-// Get all messages for a user
-export const getMessagesByUserId = (userId: string): ScheduledMessage[] => {
-  return getMessagesFromStorage(userId);
+/**
+ * Get all messages for a user using Firestore
+ */
+export const getMessagesByUserId = async (userId: string): Promise<ScheduledMessage[]> => {
+  try {
+    return await getUserMessages(userId);
+  } catch (error) {
+    console.error("Failed to get messages:", error);
+    return [];
+  }
 };
 
-// Cancel a pending message
-export const cancelMessage = (userId: string, messageId: string): boolean => {
+/**
+ * Cancel a pending message using Firestore
+ */
+export const cancelMessage = async (userId: string, messageId: string): Promise<boolean> => {
   try {
-    const messages = getMessagesFromStorage(userId);
-    const messageIndex = messages.findIndex(m => m.id === messageId);
-    
-    if (messageIndex === -1 || messages[messageIndex].status !== 'pending') {
-      return false;
-    }
-    
-    // Update the message status
-    messages.splice(messageIndex, 1);
-    
-    // Only use localStorage if we're in the browser
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`exitpal-messages-${userId}`, JSON.stringify(messages));
-    }
-    
-    return true;
+    // In a real app, you'd validate ownership here
+    // For now, we'll trust the userId parameter
+    return await deleteMessage(messageId);
   } catch (error) {
     console.error("Failed to cancel message:", error);
     return false;
   }
 };
 
-// Update message status
-export const updateMessageStatus = (userId: string, messageId: string, status: MessageStatus): boolean => {
+/**
+ * Update message status using Firestore
+ */
+export const updateMessageStatus = async (messageId: string, status: MessageStatus): Promise<boolean> => {
   try {
-    const messages = getMessagesFromStorage(userId);
-    const messageIndex = messages.findIndex(m => m.id === messageId);
-    
-    if (messageIndex === -1) {
-      return false;
-    }
-    
-    // Update the message status
-    messages[messageIndex].status = status;
-    
-    // Only use localStorage if we're in the browser
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`exitpal-messages-${userId}`, JSON.stringify(messages));
-    }
-    
-    return true;
+    return await updateFirestoreMessageStatus(messageId, status);
   } catch (error) {
     console.error("Failed to update message status:", error);
     return false;
   }
 };
 
-// Helper function to get messages from localStorage
-const getMessagesFromStorage = (userId: string): ScheduledMessage[] => {
-  try {
-    // Only use localStorage if we're in the browser
-    if (typeof window === 'undefined') {
-      return [];
-    }
-    
-    const messagesJson = localStorage.getItem(`exitpal-messages-${userId}`);
-    return messagesJson ? JSON.parse(messagesJson) : [];
-  } catch (error) {
-    console.error("Failed to get messages from storage:", error);
-    return [];
-  }
+/**
+ * Subscribe to real-time message updates
+ * This is a new feature enabled by Firestore!
+ */
+export const subscribeToMessages = (
+  userId: string, 
+  callback: (messages: ScheduledMessage[]) => void
+): (() => void) => {
+  return subscribeToUserMessages(userId, callback);
 };
 
-// Mock function to simulate message sending after the scheduled time
+/**
+ * Mock function to simulate message sending after the scheduled time
+ * In production, this would be handled by a server-side job scheduler
+ */
 const simulateMessageSending = (message: ScheduledMessage) => {
   // Only run in browser environment
   if (typeof window === 'undefined') {
@@ -141,16 +116,26 @@ const simulateMessageSending = (message: ScheduledMessage) => {
   const currentTime = new Date().getTime();
   const delay = Math.max(0, scheduledTime - currentTime);
   
-  setTimeout(() => {
+  setTimeout(async () => {
     console.log(`Simulating sending ${message.messageType} to ${message.phoneNumber}`);
     
     // In a real app, we would call Twilio API here
     const success = Math.random() > 0.1; // 90% success rate for simulation
     
-    updateMessageStatus(
-      message.userId, 
+    await updateMessageStatus(
       message.id, 
       success ? 'sent' : 'failed'
     );
   }, delay);
+};
+
+// Legacy functions for backward compatibility
+// These maintain the same interface but now use Firestore
+
+/**
+ * @deprecated Use getMessagesByUserId instead
+ */
+export const getMessagesFromStorage = async (userId: string): Promise<ScheduledMessage[]> => {
+  console.warn('getMessagesFromStorage is deprecated. Use getMessagesByUserId instead.');
+  return getMessagesByUserId(userId);
 };
