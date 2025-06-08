@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { useAuth } from "./auth-provider"
+import { useAuth } from "../src/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { LucidePhone, Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
