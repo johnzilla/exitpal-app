@@ -2,10 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { getProfile, updateProfile } from "@/lib/database-service";
-import type { User } from "@supabase/supabase-js";
-import type { Profile } from "@/lib/supabase";
+import { storageService, type User } from "@/lib/storage-service";
+import { v4 as uuidv4 } from 'uuid';
 
 type AuthUser = {
   id: string;
@@ -31,66 +29,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Convert Supabase user + profile to our AuthUser type
-  const createAuthUser = (supabaseUser: User, profile: Profile): AuthUser => ({
-    id: supabaseUser.id,
-    email: supabaseUser.email!,
-    phone: profile.phone,
-    isPremium: profile.is_premium,
+  // Convert storage User to AuthUser
+  const convertToAuthUser = (storageUser: User): AuthUser => ({
+    id: storageUser.id,
+    email: storageUser.email,
+    phone: storageUser.phone,
+    isPremium: storageUser.isPremium,
   });
 
   // Check if user is logged in on initial load
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        const profile = await getProfile(session.user.id);
-        if (profile) {
-          setUser(createAuthUser(session.user, profile));
-        }
-      }
-      
-      setLoading(false);
-    };
-
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          const profile = await getProfile(session.user.id);
-          if (profile) {
-            setUser(createAuthUser(session.user, profile));
+    const checkAuth = () => {
+      try {
+        const currentUserId = sessionStorage.getItem("exitpal-current-user");
+        if (currentUserId) {
+          const storageUser = storageService.getUser(currentUserId);
+          if (storageUser) {
+            setUser(convertToAuthUser(storageUser));
+          } else {
+            // Clean up invalid session
+            sessionStorage.removeItem("exitpal-current-user");
           }
-        } else {
-          setUser(null);
         }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+      } finally {
         setLoading(false);
       }
-    );
+    };
 
-    return () => subscription.unsubscribe();
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        const profile = await getProfile(data.user.id);
-        if (profile) {
-          setUser(createAuthUser(data.user, profile));
-          router.push("/dashboard");
-        }
+      // In a real app, we would validate credentials with a backend
+      const existingUser = storageService.getUserByEmail(email);
+      
+      if (!existingUser) {
+        throw new Error("User not found");
       }
+      
+      // Set session
+      sessionStorage.setItem("exitpal-current-user", existingUser.id);
+      setUser(convertToAuthUser(existingUser));
+      router.push("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
@@ -102,29 +86,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, phone?: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            phone: phone || '',
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        // Profile will be created automatically by the trigger
-        // Wait a moment for the trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const profile = await getProfile(data.user.id);
-        if (profile) {
-          setUser(createAuthUser(data.user, profile));
-          router.push("/dashboard");
-        }
+      // Check if user already exists
+      const existingUser = storageService.getUserByEmail(email);
+      if (existingUser) {
+        throw new Error("User already exists");
       }
+      
+      // Create new user
+      const newUser: User = {
+        id: uuidv4(),
+        email,
+        phone: phone || undefined,
+        isPremium: false,
+        createdAt: new Date(),
+      };
+      
+      const success = storageService.saveUser(newUser);
+      if (!success) {
+        throw new Error("Failed to create user");
+      }
+      
+      // Set session
+      sessionStorage.setItem("exitpal-current-user", newUser.id);
+      setUser(convertToAuthUser(newUser));
+      router.push("/dashboard");
     } catch (error) {
       console.error("Signup failed:", error);
       throw error;
@@ -136,14 +121,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-
-      if (error) throw error;
+      // Mock Google sign-in - create a demo user
+      const mockEmail = `demo-${Date.now()}@gmail.com`;
+      const newUser: User = {
+        id: uuidv4(),
+        email: mockEmail,
+        phone: undefined,
+        isPremium: false,
+        createdAt: new Date(),
+      };
+      
+      const success = storageService.saveUser(newUser);
+      if (!success) {
+        throw new Error("Failed to create user");
+      }
+      
+      // Set session
+      sessionStorage.setItem("exitpal-current-user", newUser.id);
+      setUser(convertToAuthUser(newUser));
+      router.push("/dashboard");
     } catch (error) {
       console.error("Google sign in failed:", error);
       throw error;
@@ -152,8 +148,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
+  const logout = () => {
+    sessionStorage.removeItem("exitpal-current-user");
     setUser(null);
     router.push("/");
   };
@@ -162,17 +158,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     
     try {
-      // Update profile in database
-      const profileUpdates: Partial<Profile> = {};
-      if (userData.phone !== undefined) profileUpdates.phone = userData.phone;
-      if (userData.isPremium !== undefined) profileUpdates.is_premium = userData.isPremium;
-      
-      const success = await updateProfile(user.id, profileUpdates);
-      
-      if (success) {
-        // Update local state
-        setUser(prev => prev ? { ...prev, ...userData } : null);
+      const currentStorageUser = storageService.getUser(user.id);
+      if (!currentStorageUser) {
+        throw new Error("User not found");
       }
+      
+      const updatedUser: User = {
+        ...currentStorageUser,
+        ...userData,
+      };
+      
+      const success = storageService.saveUser(updatedUser);
+      if (!success) {
+        throw new Error("Failed to update user");
+      }
+      
+      // Update local state
+      setUser(prev => prev ? { ...prev, ...userData } : null);
     } catch (error) {
       console.error("Failed to update user:", error);
       throw error;

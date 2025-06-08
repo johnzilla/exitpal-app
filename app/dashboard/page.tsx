@@ -20,7 +20,7 @@ import {
   cancelMessage,
   getDefaultTwilioNumber,
   MessageType
-} from "@/lib/message-service";
+} from "@/lib/storage-service";
 import {
   Table,
   TableBody,
@@ -50,6 +50,7 @@ export default function DashboardPage() {
   
   const [messages, setMessages] = useState<ScheduledMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isClient, setIsClient] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string>("");
   
@@ -61,24 +62,28 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    
     // If user is not logged in, redirect to login page
-    if (!user && !isLoading) {
+    if (!user) {
       router.push("/login");
       return;
     }
     
-    if (user) {
-      // Set the phone number from user profile if available
-      if (user.phone) {
-        setFormData(prev => ({ ...prev, phoneNumber: user.phone! }));
-      }
-      
-      // Load user's scheduled messages
-      const userMessages = getMessagesByUserId(user.id);
-      setMessages(userMessages);
-      setIsLoading(false);
+    // Set the phone number from user profile if available
+    if (user.phone) {
+      setFormData(prev => ({ ...prev, phoneNumber: user.phone! }));
     }
-  }, [user, router, isLoading]);
+    
+    // Load user's scheduled messages
+    const userMessages = getMessagesByUserId(user.id);
+    setMessages(userMessages);
+    setIsLoading(false);
+  }, [user, router, isClient]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -155,7 +160,8 @@ export default function DashboardPage() {
         phoneNumber: formData.phoneNumber,
         scheduledTime: scheduledTime,
         messageType: formData.messageType,
-        status: 'pending'
+        status: 'pending',
+        fromNumber: twilioNumber
       });
       
       // Update the messages list
@@ -217,8 +223,23 @@ export default function DashboardPage() {
     }
   };
 
-  // If user is not logged in or still loading, show nothing
-  if (!user && isLoading) {
+  // Show loading state during SSR and initial client render
+  if (!isClient || isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <div className="flex-1 container py-24 px-4 md:px-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If user is not logged in, show nothing (redirect will happen)
+  if (!user) {
     return null;
   }
 
@@ -381,7 +402,10 @@ export default function DashboardPage() {
                     <Button 
                       variant="outline" 
                       className="mt-4"
-                      onClick={() => document.querySelector('[value="schedule"]')?.dispatchEvent(new Event('click'))}
+                      onClick={() => {
+                        const scheduleTab = document.querySelector('[value="schedule"]') as HTMLElement;
+                        scheduleTab?.click();
+                      }}
                     >
                       Schedule Your First Message
                     </Button>
