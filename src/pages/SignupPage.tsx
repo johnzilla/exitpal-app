@@ -32,7 +32,11 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    console.log('🚀 Starting signup process...')
+    
+    // Validation
     if (formData.password !== formData.confirmPassword) {
+      console.log('❌ Password mismatch')
       toast({
         variant: "destructive",
         title: "Passwords do not match",
@@ -42,6 +46,7 @@ export default function SignupPage() {
     }
     
     if (formData.phone && !/^\+?[0-9\s\-()]{10,15}$/.test(formData.phone)) {
+      console.log('❌ Invalid phone number format')
       toast({
         variant: "destructive",
         title: "Invalid phone number",
@@ -53,16 +58,50 @@ export default function SignupPage() {
     setIsSubmitting(true)
     
     try {
+      console.log('📝 Calling signUp function...')
       await signUp(formData.email, formData.password, formData.phone)
+      
+      console.log('✅ Signup completed successfully')
       toast({
         title: "Account created",
         description: "Welcome to ExitPal!"
       })
     } catch (error) {
+      console.error('💥 Signup failed in component:', error)
+      
+      // Enhanced error handling with specific messages
+      let errorMessage = "An error occurred during sign up."
+      let errorTitle = "Sign up failed"
+      
+      if (error instanceof Error) {
+        console.log('🔍 Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        })
+        
+        // Handle specific Supabase errors
+        if (error.message.includes('User already registered')) {
+          errorTitle = "Account already exists"
+          errorMessage = "An account with this email already exists. Try logging in instead."
+        } else if (error.message.includes('Invalid email')) {
+          errorTitle = "Invalid email"
+          errorMessage = "Please enter a valid email address."
+        } else if (error.message.includes('Password')) {
+          errorTitle = "Password error"
+          errorMessage = "Password must be at least 6 characters long."
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorTitle = "Connection error"
+          errorMessage = "Unable to connect to the server. Please check your internet connection."
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
       toast({
         variant: "destructive",
-        title: "Sign up failed",
-        description: "An error occurred during sign up."
+        title: errorTitle,
+        description: errorMessage
       })
     } finally {
       setIsSubmitting(false)
@@ -71,12 +110,16 @@ export default function SignupPage() {
 
   const handleGoogleSignIn = async () => {
     try {
+      console.log('🔍 Starting Google sign-in...')
       await signInWithGoogle()
+      
       toast({
         title: "Account created",
         description: "Welcome to ExitPal!"
       })
     } catch (error) {
+      console.error('💥 Google sign-in failed:', error)
+      
       toast({
         variant: "destructive",
         title: "Google sign-in failed",

@@ -53,6 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
+      console.log('🔍 Loading user profile for:', supabaseUser.id)
+      
       // Try to get existing profile
       let { data: profile, error } = await supabase
         .from('profiles')
@@ -60,8 +62,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', supabaseUser.id)
         .single()
 
+      console.log('📊 Profile query result:', { profile, error })
+
       // If profile doesn't exist, create it
       if (error && error.code === 'PGRST116') {
+        console.log('👤 Creating new profile for user:', supabaseUser.id)
+        
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -73,13 +79,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select()
           .single()
 
-        if (insertError) throw insertError
+        console.log('✅ Profile creation result:', { newProfile, insertError })
+
+        if (insertError) {
+          console.error('❌ Profile creation failed:', insertError)
+          throw insertError
+        }
         profile = newProfile
       } else if (error) {
+        console.error('❌ Profile query failed:', error)
         throw error
       }
 
       if (profile) {
+        console.log('✅ User profile loaded successfully:', profile)
         setUser({
           id: profile.id,
           email: profile.email,
@@ -88,7 +101,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
       }
     } catch (error) {
-      console.error('Error loading user profile:', error)
+      console.error('💥 Error loading user profile:', error)
+      // Log additional context
+      console.error('🔍 Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        supabaseUser: supabaseUser
+      })
     } finally {
       setLoading(false)
     }
@@ -96,16 +115,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     setLoading(true)
+    console.log('🔐 Attempting login for:', email)
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
       
-      if (error) throw error
+      if (error) {
+        console.error('❌ Login failed:', error)
+        throw error
+      }
+      
+      console.log('✅ Login successful')
       navigate('/dashboard')
     } catch (error) {
-      console.error("Login failed:", error)
+      console.error('💥 Login error:', error)
       throw error
     } finally {
       setLoading(false)
@@ -114,8 +140,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, phone?: string) => {
     setLoading(true)
+    console.log('📝 Attempting signup for:', email, 'with phone:', phone)
+    
     try {
-      const { error } = await supabase.auth.signUp({
+      // Check if Supabase is configured
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      
+      console.log('🔧 Supabase config check:', {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseKey,
+        urlValid: supabaseUrl !== 'https://placeholder.supabase.co',
+        keyValid: supabaseKey !== 'placeholder-key'
+      })
+
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -125,10 +164,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
       
-      if (error) throw error
+      console.log('📊 Signup result:', { data, error })
+      
+      if (error) {
+        console.error('❌ Signup failed:', error)
+        console.error('🔍 Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        })
+        throw error
+      }
+      
+      console.log('✅ Signup successful:', data)
+      
+      // If email confirmation is disabled, user should be logged in immediately
+      if (data.user && !data.user.email_confirmed_at) {
+        console.log('📧 Email confirmation required')
+      }
+      
       navigate('/dashboard')
     } catch (error) {
-      console.error("Signup failed:", error)
+      console.error('💥 Signup error:', error)
+      
+      // Log additional context for debugging
+      console.error('🔍 Full error context:', {
+        error,
+        email,
+        hasPhone: !!phone,
+        timestamp: new Date().toISOString()
+      })
+      
       throw error
     } finally {
       setLoading(false)
@@ -137,6 +203,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     setLoading(true)
+    console.log('🔍 Attempting Google sign-in')
+    
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -145,9 +213,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
       
-      if (error) throw error
+      if (error) {
+        console.error('❌ Google sign-in failed:', error)
+        throw error
+      }
+      
+      console.log('✅ Google sign-in initiated')
     } catch (error) {
-      console.error("Google sign in failed:", error)
+      console.error('💥 Google sign-in error:', error)
       throw error
     } finally {
       setLoading(false)
@@ -155,6 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
+    console.log('🚪 Logging out user')
     await supabase.auth.signOut()
     setUser(null)
     navigate('/')
@@ -162,6 +236,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUser = async (userData: Partial<User>) => {
     if (!user) return
+    
+    console.log('🔄 Updating user:', userData)
     
     try {
       const { error } = await supabase
@@ -172,11 +248,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         .eq('id', user.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ User update failed:', error)
+        throw error
+      }
 
+      console.log('✅ User updated successfully')
       setUser({ ...user, ...userData })
     } catch (error) {
-      console.error('Error updating user:', error)
+      console.error('💥 Error updating user:', error)
     }
   }
 
