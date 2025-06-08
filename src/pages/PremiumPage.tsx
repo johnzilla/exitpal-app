@@ -10,7 +10,7 @@ import { Footer } from "@/components/footer"
 import { useAuth } from "@/components/auth-provider"
 import { getAvailableTwilioNumbers } from "@/lib/message-service"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import { CheckCircle2, CreditCard, Star, Smartphone } from "lucide-react"
+import { CheckCircle2, CreditCard, Star } from "lucide-react"
 
 export default function PremiumPage() {
   const { user, updateUser } = useAuth()

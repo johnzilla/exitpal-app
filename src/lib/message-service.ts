@@ -1,5 +1,4 @@
 import { supabase } from './supabase'
-import { v4 as uuidv4 } from 'uuid'
 
 export type MessageType = 'sms' | 'voice'
 export type MessageStatus = 'pending' | 'sent' | 'failed'

@@ -4,8 +4,6 @@
 import { MessageType } from '@/lib/message-service';
 
 // Mock environment variables
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || 'AC1234567890abcdef1234567890abcdef';
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || '1234567890abcdef1234567890abcdef';
 const TWILIO_DEFAULT_NUMBER = process.env.TWILIO_DEFAULT_NUMBER || '+12312345678';
 
 // Mock function to send SMS via Twilio

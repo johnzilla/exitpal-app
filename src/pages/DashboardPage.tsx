@@ -15,7 +15,6 @@ import {
   ScheduledMessage, 
   scheduleMessage, 
   cancelMessage,
-  getDefaultTwilioNumber,
   MessageType,
   subscribeToMessages
 } from '@/lib/message-service'
