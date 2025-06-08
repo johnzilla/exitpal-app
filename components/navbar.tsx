@@ -1,27 +1,27 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useAuth } from "./auth-provider";
-import { Button } from "@/components/ui/button";
-import { LucidePhone, Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ModeToggle } from "./mode-toggle";
+import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
+import { useAuth } from "./auth-provider"
+import { Button } from "@/components/ui/button"
+import { LucidePhone, Menu, X } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { ModeToggle } from "./mode-toggle"
 
 export function Navbar() {
-  const { user, logout } = useAuth();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth()
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener("scroll", handleScroll)
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
 
   return (
     <header
@@ -32,7 +32,7 @@ export function Navbar() {
     >
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <LucidePhone className="h-6 w-6" />
             <span className="font-bold text-xl">ExitPal</span>
           </Link>
@@ -41,7 +41,7 @@ export function Navbar() {
         {/* Desktop menu */}
         <nav className="hidden md:flex items-center gap-6">
           <Link 
-            href="/" 
+            to="/" 
             className="text-sm font-medium transition-colors hover:text-primary"
           >
             Home
@@ -49,13 +49,13 @@ export function Navbar() {
           {user ? (
             <>
               <Link 
-                href="/dashboard" 
+                to="/dashboard" 
                 className="text-sm font-medium transition-colors hover:text-primary"
               >
                 Dashboard
               </Link>
               <Link 
-                href="/premium" 
+                to="/premium" 
                 className="text-sm font-medium transition-colors hover:text-primary"
               >
                 Premium
@@ -65,12 +65,12 @@ export function Navbar() {
           ) : (
             <>
               <Link 
-                href="/login" 
+                to="/login" 
                 className="text-sm font-medium transition-colors hover:text-primary"
               >
                 Login
               </Link>
-              <Link href="/signup">
+              <Link to="/signup">
                 <Button variant="secondary">Sign Up</Button>
               </Link>
             </>
@@ -96,7 +96,7 @@ export function Navbar() {
         <div className="md:hidden bg-background/95 backdrop-blur-md shadow-md">
           <div className="container px-4 py-3 flex flex-col space-y-3">
             <Link 
-              href="/" 
+              to="/" 
               className="text-sm font-medium transition-colors hover:text-primary py-2"
               onClick={() => setIsMenuOpen(false)}
             >
@@ -105,14 +105,14 @@ export function Navbar() {
             {user ? (
               <>
                 <Link 
-                  href="/dashboard" 
+                  to="/dashboard" 
                   className="text-sm font-medium transition-colors hover:text-primary py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard
                 </Link>
                 <Link 
-                  href="/premium" 
+                  to="/premium" 
                   className="text-sm font-medium transition-colors hover:text-primary py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -125,14 +125,14 @@ export function Navbar() {
             ) : (
               <>
                 <Link 
-                  href="/login" 
+                  to="/login" 
                   className="text-sm font-medium transition-colors hover:text-primary py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link 
-                  href="/signup" 
+                  to="/signup" 
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <Button variant="secondary" className="w-full">Sign Up</Button>
@@ -143,5 +143,5 @@ export function Navbar() {
         </div>
       )}
     </header>
-  );
+  )
 }
