@@ -1,10 +1,9 @@
-// Firebase configuration and initialization
+// Firebase configuration and initialization with better error handling
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 // Your Firebase config object
-// You'll get this from the Firebase Console when you create your project
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -14,30 +13,35 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Initialize Firebase (only once)
+// Check if we have all required config
+const hasValidConfig = Object.values(firebaseConfig).every(value => value && value !== 'undefined');
+
 let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
+let db;
+let auth;
 
-// Initialize Firestore
-export const db = getFirestore(app);
-
-// Initialize Auth
-export const auth = getAuth(app);
-
-// For development: connect to emulators if running locally
-if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-  // Only connect to emulators in development and on client side
+if (hasValidConfig && typeof window !== 'undefined') {
   try {
-    // Uncomment these lines if you want to use Firebase emulators for local development
-    // connectFirestoreEmulator(db, 'localhost', 8080);
-    // connectAuthEmulator(auth, 'http://localhost:9099');
+    // Initialize Firebase (only once and only in browser)
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApps()[0];
+    }
+
+    // Initialize Firestore and Auth
+    db = getFirestore(app);
+    auth = getAuth(app);
   } catch (error) {
-    // Emulators already connected
+    console.warn('Firebase initialization failed:', error);
   }
 }
 
+// Export with fallbacks
+export { db, auth };
 export default app;
+
+// Helper to check if Firebase is available
+export const isFirebaseAvailable = () => {
+  return hasValidConfig && typeof window !== 'undefined' && db && auth;
+};

@@ -39,11 +39,13 @@ import {
   CheckCircle2,
   XCircle,
   Wifi,
-  WifiOff
+  WifiOff,
+  Database
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { isFirebaseAvailable } from "@/lib/firebase";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -54,6 +56,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isClient, setIsClient] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [storageType, setStorageType] = useState<'firebase' | 'localStorage'>('localStorage');
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string>("");
   
@@ -66,6 +69,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setIsClient(true);
+    setStorageType(isFirebaseAvailable() ? 'firebase' : 'localStorage');
   }, []);
 
   useEffect(() => {
@@ -90,16 +94,6 @@ export default function DashboardPage() {
         setIsLoading(false);
         setIsConnected(true);
       });
-
-      // Handle connection errors
-      const handleConnectionError = () => {
-        setIsConnected(false);
-        toast({
-          variant: "destructive",
-          title: "Connection lost",
-          description: "Trying to reconnect to the database..."
-        });
-      };
 
       // Cleanup subscription on unmount
       return () => {
@@ -265,24 +259,15 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      {/* Connection Status Indicator */}
+      {/* Storage Type Indicator */}
       <div className={cn(
         "fixed top-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all",
-        isConnected 
-          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
-          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+        storageType === 'firebase'
+          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" 
+          : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
       )}>
-        {isConnected ? (
-          <>
-            <Wifi className="h-3 w-3" />
-            <span>Connected</span>
-          </>
-        ) : (
-          <>
-            <WifiOff className="h-3 w-3" />
-            <span>Reconnecting...</span>
-          </>
-        )}
+        <Database className="h-3 w-3" />
+        <span>{storageType === 'firebase' ? 'Firebase' : 'Local Storage'}</span>
       </div>
 
       <div className="flex-1 container py-24 px-4 md:px-6">
@@ -290,7 +275,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span>Real-time updates</span>
+            <span>{storageType === 'firebase' ? 'Real-time updates' : 'Local storage'}</span>
           </div>
         </div>
         
@@ -442,15 +427,13 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>My Scheduled Messages</span>
-                  {isConnected && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span>Live</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Database className="h-3 w-3" />
+                    <span>{storageType}</span>
+                  </div>
                 </CardTitle>
                 <CardDescription>
-                  View and manage your scheduled messages (updates in real-time)
+                  View and manage your scheduled messages
                 </CardDescription>
               </CardHeader>
               <CardContent>
