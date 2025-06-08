@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from '../src/lib/supabase'
 import { v4 as uuidv4 } from 'uuid'
 
 export type MessageType = 'sms' | 'voice'
