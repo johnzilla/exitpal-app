@@ -26,6 +26,7 @@ export interface User {
   isPremium: boolean;
   selectedTwilioNumberId?: string;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
 // Storage keys
@@ -77,7 +78,7 @@ class StorageService {
     if (existingIndex >= 0) {
       users[existingIndex] = { ...user, updatedAt: new Date() };
     } else {
-      users.push(user);
+      users.push({ ...user, updatedAt: new Date() });
     }
     
     return this.setItem(USERS_KEY, JSON.stringify(users));
@@ -100,7 +101,8 @@ class StorageService {
     try {
       return JSON.parse(usersJson).map((user: any) => ({
         ...user,
-        createdAt: new Date(user.createdAt)
+        createdAt: new Date(user.createdAt),
+        updatedAt: user.updatedAt ? new Date(user.updatedAt) : undefined
       }));
     } catch (error) {
       console.error('Error parsing users:', error);
