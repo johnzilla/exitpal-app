@@ -9,3 +9,18 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Force Netlify to use static site hosting instead of Next.js runtime
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  pretty_urls = true
