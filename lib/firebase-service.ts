@@ -1,21 +1,60 @@
-// Firebase Firestore service with fallback to localStorage
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  getDocs, 
-  deleteDoc, 
-  updateDoc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot,
-  serverTimestamp,
-  Timestamp 
-} from 'firebase/firestore';
-import { db, isFirebaseAvailable } from './firebase';
+// Firebase Firestore service with localStorage fallback for static exports
 import { MessageType, MessageStatus, ScheduledMessage } from './message-service';
 import { v4 as uuidv4 } from 'uuid';
+
+// Firebase will only be available in development/runtime, not during build
+let firestoreOperations: any = null;
+
+// Initialize Firestore operations dynamically
+const initFirestore = async () => {
+  if (typeof window === 'undefined' || firestoreOperations) {
+    return firestoreOperations;
+  }
+
+  try {
+    const { isFirebaseAvailable, db } = await import('./firebase');
+    
+    if (!isFirebaseAvailable() || !db) {
+      return null;
+    }
+
+    const {
+      collection,
+      doc,
+      addDoc,
+      getDocs,
+      deleteDoc,
+      updateDoc,
+      query,
+      where,
+      orderBy,
+      onSnapshot,
+      serverTimestamp,
+      Timestamp
+    } = await import('firebase/firestore');
+
+    firestoreOperations = {
+      collection,
+      doc,
+      addDoc,
+      getDocs,
+      deleteDoc,
+      updateDoc,
+      query,
+      where,
+      orderBy,
+      onSnapshot,
+      serverTimestamp,
+      Timestamp,
+      db
+    };
+
+    return firestoreOperations;
+  } catch (error) {
+    console.warn('Firestore operations not available:', error);
+    return null;
+  }
+};
 
 // Collection names
 const MESSAGES_COLLECTION = 'messages';
@@ -51,7 +90,7 @@ const saveMessagesToLocalStorage = (userId: string, messages: ScheduledMessage[]
 
 // Convert Firestore timestamp to Date
 const convertTimestamp = (timestamp: any): Date => {
-  if (timestamp instanceof Timestamp) {
+  if (timestamp && typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
   if (timestamp && timestamp.seconds) {
@@ -61,11 +100,11 @@ const convertTimestamp = (timestamp: any): Date => {
 };
 
 // Convert ScheduledMessage for Firestore
-const prepareMessageForFirestore = (message: Omit<ScheduledMessage, 'id' | 'createdAt'>) => {
+const prepareMessageForFirestore = (message: Omit<ScheduledMessage, 'id' | 'createdAt'>, ops: any) => {
   return {
     ...message,
-    scheduledTime: Timestamp.fromDate(new Date(message.scheduledTime)),
-    createdAt: serverTimestamp()
+    scheduledTime: ops.Timestamp.fromDate(new Date(message.scheduledTime)),
+    createdAt: ops.serverTimestamp()
   };
 };
 
@@ -95,10 +134,12 @@ export const saveMessage = async (message: Omit<ScheduledMessage, 'id' | 'create
     createdAt: new Date()
   };
 
-  if (isFirebaseAvailable()) {
+  const ops = await initFirestore();
+  
+  if (ops) {
     try {
-      const messageData = prepareMessageForFirestore(message);
-      const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), messageData);
+      const messageData = prepareMessageForFirestore(message, ops);
+      const docRef = await ops.addDoc(ops.collection(ops.db, MESSAGES_COLLECTION), messageData);
       return { ...newMessage, id: docRef.id };
     } catch (error) {
       console.warn('Firebase save failed, falling back to localStorage:', error);
@@ -117,18 +158,20 @@ export const saveMessage = async (message: Omit<ScheduledMessage, 'id' | 'create
  * Get all messages for a specific user (Firebase or localStorage fallback)
  */
 export const getUserMessages = async (userId: string): Promise<ScheduledMessage[]> => {
-  if (isFirebaseAvailable()) {
+  const ops = await initFirestore();
+  
+  if (ops) {
     try {
-      const q = query(
-        collection(db, MESSAGES_COLLECTION),
-        where('userId', '==', userId),
-        orderBy('scheduledTime', 'desc')
+      const q = ops.query(
+        ops.collection(ops.db, MESSAGES_COLLECTION),
+        ops.where('userId', '==', userId),
+        ops.orderBy('scheduledTime', 'desc')
       );
       
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await ops.getDocs(q);
       const messages: ScheduledMessage[] = [];
       
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach((doc: any) => {
         messages.push(convertFirestoreMessage(doc));
       });
       
@@ -146,17 +189,18 @@ export const getUserMessages = async (userId: string): Promise<ScheduledMessage[
  * Delete a message (Firebase or localStorage fallback)
  */
 export const deleteMessage = async (messageId: string): Promise<boolean> => {
-  if (isFirebaseAvailable()) {
+  const ops = await initFirestore();
+  
+  if (ops) {
     try {
-      await deleteDoc(doc(db, MESSAGES_COLLECTION, messageId));
+      await ops.deleteDoc(ops.doc(ops.db, MESSAGES_COLLECTION, messageId));
       return true;
     } catch (error) {
       console.warn('Firebase delete failed, falling back to localStorage:', error);
     }
   }
 
-  // Fallback to localStorage - we need userId for this
-  // For now, we'll search through all possible user storage
+  // Fallback to localStorage - search through all possible user storage
   if (typeof window !== 'undefined') {
     try {
       for (let i = 0; i < localStorage.length; i++) {
@@ -182,10 +226,12 @@ export const deleteMessage = async (messageId: string): Promise<boolean> => {
  * Update message status (Firebase or localStorage fallback)
  */
 export const updateMessageStatus = async (messageId: string, status: MessageStatus): Promise<boolean> => {
-  if (isFirebaseAvailable()) {
+  const ops = await initFirestore();
+  
+  if (ops) {
     try {
-      const messageRef = doc(db, MESSAGES_COLLECTION, messageId);
-      await updateDoc(messageRef, { status });
+      const messageRef = ops.doc(ops.db, MESSAGES_COLLECTION, messageId);
+      await ops.updateDoc(messageRef, { status });
       return true;
     } catch (error) {
       console.warn('Firebase update failed, falling back to localStorage:', error);
@@ -223,34 +269,40 @@ export const subscribeToUserMessages = (
   userId: string, 
   callback: (messages: ScheduledMessage[]) => void
 ): (() => void) => {
-  if (isFirebaseAvailable()) {
-    try {
-      const q = query(
-        collection(db, MESSAGES_COLLECTION),
-        where('userId', '==', userId),
-        orderBy('scheduledTime', 'desc')
-      );
-      
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const messages: ScheduledMessage[] = [];
-        querySnapshot.forEach((doc) => {
-          messages.push(convertFirestoreMessage(doc));
+  // Try Firebase real-time listener
+  initFirestore().then(ops => {
+    if (ops) {
+      try {
+        const q = ops.query(
+          ops.collection(ops.db, MESSAGES_COLLECTION),
+          ops.where('userId', '==', userId),
+          ops.orderBy('scheduledTime', 'desc')
+        );
+        
+        const unsubscribe = ops.onSnapshot(q, (querySnapshot: any) => {
+          const messages: ScheduledMessage[] = [];
+          querySnapshot.forEach((doc: any) => {
+            messages.push(convertFirestoreMessage(doc));
+          });
+          callback(messages);
+        }, (error: any) => {
+          console.error('Error in real-time listener:', error);
+          // Fall back to localStorage polling
+          startPolling();
         });
-        callback(messages);
-      }, (error) => {
-        console.error('Error in real-time listener:', error);
-        // Fall back to localStorage
-        fallbackToPolling();
-      });
-      
-      return unsubscribe;
-    } catch (error) {
-      console.warn('Firebase subscription failed, falling back to polling:', error);
+        
+        return unsubscribe;
+      } catch (error) {
+        console.warn('Firebase subscription failed, falling back to polling:', error);
+        startPolling();
+      }
+    } else {
+      startPolling();
     }
-  }
+  });
 
   // Fallback to polling localStorage
-  function fallbackToPolling() {
+  function startPolling() {
     let lastMessages = JSON.stringify([]);
     
     const poll = () => {
@@ -272,35 +324,6 @@ export const subscribeToUserMessages = (
     return () => clearInterval(interval);
   }
 
-  return fallbackToPolling();
-};
-
-/**
- * Security validation (Firebase only)
- */
-export const validateMessageOwnership = async (messageId: string, userId: string): Promise<boolean> => {
-  if (!isFirebaseAvailable()) {
-    return true; // Skip validation for localStorage fallback
-  }
-
-  try {
-    const q = query(
-      collection(db, MESSAGES_COLLECTION),
-      where('userId', '==', userId)
-    );
-    
-    const querySnapshot = await getDocs(q);
-    let isOwner = false;
-    
-    querySnapshot.forEach((doc) => {
-      if (doc.id === messageId) {
-        isOwner = true;
-      }
-    });
-    
-    return isOwner;
-  } catch (error) {
-    console.error('Error validating message ownership:', error);
-    return false;
-  }
+  // Start with localStorage polling immediately
+  return startPolling();
 };

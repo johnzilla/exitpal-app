@@ -8,8 +8,15 @@ const nextConfig = {
   trailingSlash: true,
   skipTrailingSlashRedirect: true,
   webpack: (config, { isServer }) => {
-    // Fix for Firebase and other Node.js modules in client-side builds
+    // For static exports, we need to completely exclude Firebase
     if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'firebase/app': false,
+        'firebase/firestore': false,
+        'firebase/auth': false,
+      };
+      
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -24,6 +31,9 @@ const nextConfig = {
         assert: false,
         os: false,
         path: false,
+        util: false,
+        buffer: false,
+        events: false,
       };
     }
     
