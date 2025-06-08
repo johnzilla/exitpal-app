@@ -1,155 +1,196 @@
-"use client";
-
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
+import { User as SupabaseUser } from '@supabase/supabase-js'
 
 type User = {
-  id: string;
-  email: string;
-  phone?: string;
-  isPremium: boolean;
-};
+  id: string
+  email: string
+  phone?: string
+  isPremium: boolean
+}
 
 type AuthContextType = {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, phone?: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  logout: () => void;
-  updateUser: (userData: Partial<User>) => void;
-};
+  user: User | null
+  loading: boolean
+  login: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string, phone?: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
+  logout: () => void
+  updateUser: (userData: Partial<User>) => void
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   // Check if user is logged in on initial load
   useEffect(() => {
-    // Only run in browser environment
-    if (typeof window === 'undefined') {
-      setLoading(false);
-      return;
-    }
-    
-    const storedUser = localStorage.getItem("exitpal-user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
-
-  // For demo purposes, we're using localStorage to simulate authentication
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      // In a real app, we would validate with a backend here
-      const mockUser = {
-        id: "user-" + Date.now(),
-        email,
-        phone: "",
-        isPremium: false
-      };
-      
-      // Only use localStorage if we're in the browser
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user)
+      } else {
+        setLoading(false)
       }
-      setUser(mockUser);
-      router.push("/dashboard");
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await loadUserProfile(session.user)
+      } else {
+        setUser(null)
+        setLoading(false)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const loadUserProfile = async (supabaseUser: SupabaseUser) => {
+    try {
+      // Try to get existing profile
+      let { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single()
+
+      // If profile doesn't exist, create it
+      if (error && error.code === 'PGRST116') {
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: supabaseUser.id,
+            email: supabaseUser.email || '',
+            phone: null,
+            is_premium: false
+          })
+          .select()
+          .single()
+
+        if (insertError) throw insertError
+        profile = newProfile
+      } else if (error) {
+        throw error
+      }
+
+      if (profile) {
+        setUser({
+          id: profile.id,
+          email: profile.email,
+          phone: profile.phone || undefined,
+          isPremium: profile.is_premium
+        })
+      }
     } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+      console.error('Error loading user profile:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const login = async (email: string, password: string) => {
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      
+      if (error) throw error
+      navigate('/dashboard')
+    } catch (error) {
+      console.error("Login failed:", error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const signUp = async (email: string, password: string, phone?: string) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      // In a real app, we would create an account with a backend here
-      const mockUser = {
-        id: "user-" + Date.now(),
+      const { error } = await supabase.auth.signUp({
         email,
-        phone: phone || "",
-        isPremium: false
-      };
+        password,
+        options: {
+          data: {
+            phone: phone || null
+          }
+        }
+      })
       
-      // Only use localStorage if we're in the browser
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
-      }
-      setUser(mockUser);
-      router.push("/dashboard");
+      if (error) throw error
+      navigate('/dashboard')
     } catch (error) {
-      console.error("Signup failed:", error);
-      throw error;
+      console.error("Signup failed:", error)
+      throw error
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const signInWithGoogle = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      // Mock Google sign-in
-      const mockUser = {
-        id: "google-user-" + Date.now(),
-        email: "user@gmail.com",
-        phone: "",
-        isPremium: false
-      };
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      })
       
-      // Only use localStorage if we're in the browser
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
-      }
-      setUser(mockUser);
-      router.push("/dashboard");
+      if (error) throw error
     } catch (error) {
-      console.error("Google sign in failed:", error);
-      throw error;
+      console.error("Google sign in failed:", error)
+      throw error
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const logout = () => {
-    // Only use localStorage if we're in the browser
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem("exitpal-user");
-    }
-    setUser(null);
-    router.push("/");
-  };
+  const logout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    navigate('/')
+  }
 
-  const updateUser = (userData: Partial<User>) => {
-    if (!user) return;
+  const updateUser = async (userData: Partial<User>) => {
+    if (!user) return
     
-    const updatedUser = { ...user, ...userData };
-    
-    // Only use localStorage if we're in the browser
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("exitpal-user", JSON.stringify(updatedUser));
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          phone: userData.phone,
+          is_premium: userData.isPremium
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setUser({ ...user, ...userData })
+    } catch (error) {
+      console.error('Error updating user:', error)
     }
-    setUser(updatedUser);
-  };
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, login, signUp, signInWithGoogle, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth must be used within an AuthProvider")
   }
-  return context;
-};
+  return context
+}

@@ -1,12 +1,10 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { useAuth } from "./auth-provider"
+import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { LucidePhone, Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ModeToggle } from "./mode-toggle"
+import { ModeToggle } from "@/components/mode-toggle"
 
 export function Navbar() {
   const { user, logout } = useAuth()
