@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "../components/auth-provider"
 import { FcGoogle } from "react-icons/fc"
 
 export default function SignupPage() {

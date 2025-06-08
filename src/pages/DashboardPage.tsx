@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useToast } from '@/hooks/use-toast'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
-import { useAuth } from '@/components/auth-provider'
+import { useAuth } from '../components/auth-provider'
 import { 
   ScheduledMessage, 
   scheduleMessage, 
