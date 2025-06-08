@@ -4,6 +4,13 @@ import { Database } from './database.types'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+console.log('🔧 Environment check:', {
+  url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'NOT SET',
+  key: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'NOT SET',
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey
+})
+
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('⚠️ Supabase environment variables not found. Using demo mode.')
 }
@@ -22,18 +29,28 @@ export const supabase = createClient<Database>(
 
 // Helper to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
-  return !!(
+  const configured = !!(
     supabaseUrl && 
     supabaseAnonKey && 
     supabaseUrl !== 'https://placeholder.supabase.co' && 
     supabaseAnonKey !== 'placeholder-key' &&
     supabaseUrl.includes('supabase.co')
   )
+  
+  console.log('🔍 Supabase configuration check:', {
+    configured,
+    url: supabaseUrl,
+    hasValidUrl: supabaseUrl && supabaseUrl.includes('supabase.co'),
+    hasValidKey: supabaseAnonKey && supabaseAnonKey !== 'placeholder-key'
+  })
+  
+  return configured
 }
 
 // Helper to test Supabase connection
 export const testSupabaseConnection = async () => {
   try {
+    console.log('🧪 Testing Supabase connection...')
     const { data, error } = await supabase.from('profiles').select('count').limit(1)
     if (error) {
       console.error('❌ Supabase connection test failed:', error)
