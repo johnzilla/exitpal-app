@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,12 +20,28 @@ export default function PremiumPage() {
   const { toast } = useToast();
   const [selectedNumberId, setSelectedNumberId] = useState<string>("");
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   const availableNumbers = getAvailableTwilioNumbers();
 
-  // If user is not logged in, redirect to login
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // Only redirect after client-side hydration
+    if (isClient && !user) {
+      router.push("/login");
+    }
+  }, [user, router, isClient]);
+
+  // Don't render anything until client-side hydration is complete
+  if (!isClient) {
+    return null;
+  }
+
+  // If user is not logged in, show loading or redirect
   if (!user) {
-    router.push("/login");
     return null;
   }
 

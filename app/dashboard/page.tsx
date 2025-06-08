@@ -50,6 +50,7 @@ export default function DashboardPage() {
   
   const [messages, setMessages] = useState<ScheduledMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isClient, setIsClient] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string>("");
   
@@ -61,8 +62,15 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // Only run after client-side hydration
+    if (!isClient) return;
+    
     // If user is not logged in, redirect to login page
-    if (!user && !isLoading) {
+    if (!user) {
       router.push("/login");
       return;
     }
@@ -78,7 +86,17 @@ export default function DashboardPage() {
       setMessages(userMessages);
       setIsLoading(false);
     }
-  }, [user, router, isLoading]);
+  }, [user, router, isClient]);
+
+  // Don't render anything until client-side hydration is complete
+  if (!isClient) {
+    return null;
+  }
+
+  // If user is not logged in or still loading, show nothing
+  if (!user && !isLoading) {
+    return null;
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -216,11 +234,6 @@ export default function DashboardPage() {
         return <AlertCircle className="h-5 w-5 text-muted-foreground" />;
     }
   };
-
-  // If user is not logged in or still loading, show nothing
-  if (!user && isLoading) {
-    return null;
-  }
 
   return (
     <div className="flex flex-col min-h-screen">

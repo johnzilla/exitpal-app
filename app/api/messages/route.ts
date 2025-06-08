@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getMessagesByUserId } from '@/lib/message-service';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
