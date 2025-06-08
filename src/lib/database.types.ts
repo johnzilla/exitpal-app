@@ -75,7 +75,8 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      message_type: 'sms' | 'voice'
+      message_status: 'pending' | 'sent' | 'failed'
     }
     CompositeTypes: {
       [_ in never]: never
