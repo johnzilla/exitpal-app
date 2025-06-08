@@ -1,18 +1,16 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useToast } from "@/hooks/use-toast";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { useAuth } from "@/components/auth-provider";
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { format } from 'date-fns'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { useToast } from '@/hooks/use-toast'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
+import { useAuth } from '@/components/auth-provider'
 import { 
   ScheduledMessage, 
   scheduleMessage, 
@@ -20,7 +18,7 @@ import {
   getDefaultTwilioNumber,
   MessageType,
   subscribeToMessages
-} from "@/lib/message-service";
+} from '@/lib/message-service'
 import {
   Table,
   TableBody,
@@ -28,8 +26,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
 import { 
   Calendar as CalendarIcon,
   Phone, 
@@ -38,109 +36,82 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  Wifi,
-  WifiOff,
   Database
-} from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { isFirebaseAvailable } from "@/lib/firebase";
+} from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { cn } from '@/lib/utils'
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const router = useRouter();
-  const { toast } = useToast();
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { toast } = useToast()
   
-  const [messages, setMessages] = useState<ScheduledMessage[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isClient, setIsClient] = useState(false);
-  const [isConnected, setIsConnected] = useState(true);
-  const [storageType, setStorageType] = useState<'firebase' | 'localStorage'>('localStorage');
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [time, setTime] = useState<string>("");
+  const [messages, setMessages] = useState<ScheduledMessage[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [time, setTime] = useState<string>("")
   
   const [formData, setFormData] = useState({
     contactName: "",
     messageContent: "",
     messageType: "sms" as MessageType,
     phoneNumber: ""
-  });
+  })
 
   useEffect(() => {
-    setIsClient(true);
-    setStorageType(isFirebaseAvailable() ? 'firebase' : 'localStorage');
-  }, []);
-
-  useEffect(() => {
-    // Only run after client-side hydration
-    if (!isClient) return;
-    
     // If user is not logged in, redirect to login page
     if (!user) {
-      router.push("/login");
-      return;
+      navigate('/login')
+      return
     }
     
-    if (user) {
-      // Set the phone number from user profile if available
-      if (user.phone) {
-        setFormData(prev => ({ ...prev, phoneNumber: user.phone! }));
-      }
-      
-      // Subscribe to real-time message updates
-      const unsubscribe = subscribeToMessages(user.id, (updatedMessages) => {
-        setMessages(updatedMessages);
-        setIsLoading(false);
-        setIsConnected(true);
-      });
-
-      // Cleanup subscription on unmount
-      return () => {
-        unsubscribe();
-      };
+    // Set the phone number from user profile if available
+    if (user.phone) {
+      setFormData(prev => ({ ...prev, phoneNumber: user.phone! }))
     }
-  }, [user, router, isClient, toast]);
+    
+    // Subscribe to real-time message updates
+    const unsubscribe = subscribeToMessages(user.id, (updatedMessages) => {
+      setMessages(updatedMessages)
+      setIsLoading(false)
+    })
 
-  // Don't render anything until client-side hydration is complete
-  if (!isClient) {
-    return null;
-  }
-
-  // If user is not logged in or still loading, show nothing
-  if (!user && !isLoading) {
-    return null;
-  }
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe()
+    }
+  }, [user, navigate])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const handleMessageTypeChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
       messageType: value as MessageType
-    }));
-  };
+    }))
+  }
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTime(e.target.value);
-  };
+    setTime(e.target.value)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     
     if (!user) {
       toast({
         variant: "destructive",
         title: "Authentication required",
         description: "Please log in to schedule messages."
-      });
-      return;
+      })
+      return
     }
     
     if (!date) {
@@ -148,8 +119,8 @@ export default function DashboardPage() {
         variant: "destructive",
         title: "Date required",
         description: "Please select a date for your message."
-      });
-      return;
+      })
+      return
     }
     
     if (!time) {
@@ -157,28 +128,28 @@ export default function DashboardPage() {
         variant: "destructive",
         title: "Time required",
         description: "Please select a time for your message."
-      });
-      return;
+      })
+      return
     }
     
     // Create a date object with the selected date and time
-    const [hours, minutes] = time.split(':').map(Number);
-    const scheduledTime = new Date(date);
-    scheduledTime.setHours(hours, minutes);
+    const [hours, minutes] = time.split(':').map(Number)
+    const scheduledTime = new Date(date)
+    scheduledTime.setHours(hours, minutes)
     
     // Ensure the scheduled time is at least 10 minutes in the future
-    const minTime = new Date(Date.now() + 10 * 60 * 1000);
+    const minTime = new Date(Date.now() + 10 * 60 * 1000)
     if (scheduledTime < minTime) {
       toast({
         variant: "destructive",
         title: "Invalid time",
         description: "Scheduled time must be at least 10 minutes in the future."
-      });
-      return;
+      })
+      return
     }
     
     try {
-      setIsLoading(true);
+      setIsLoading(true)
       
       await scheduleMessage({
         userId: user.id,
@@ -188,12 +159,12 @@ export default function DashboardPage() {
         scheduledTime: scheduledTime,
         messageType: formData.messageType,
         status: 'pending'
-      });
+      })
       
       toast({
         title: "Message scheduled",
         description: `Your ${formData.messageType} will be sent at ${format(scheduledTime, "PPpp")}.`
-      });
+      })
       
       // Reset the form
       setFormData({
@@ -201,73 +172,73 @@ export default function DashboardPage() {
         messageContent: "",
         messageType: "sms",
         phoneNumber: user.phone || ""
-      });
-      setDate(new Date());
-      setTime("");
+      })
+      setDate(new Date())
+      setTime("")
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Failed to schedule message",
         description: "An error occurred. Please try again."
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleCancelMessage = async (messageId: string) => {
-    if (!user) return;
+    if (!user) return
     
     try {
-      const success = await cancelMessage(user.id, messageId);
+      const success = await cancelMessage(user.id, messageId)
       
       if (success) {
         toast({
           title: "Message canceled",
           description: "Your scheduled message has been canceled."
-        });
+        })
       } else {
         toast({
           variant: "destructive",
           title: "Failed to cancel message",
           description: "An error occurred or the message has already been sent."
-        });
+        })
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Failed to cancel message",
         description: "An error occurred. Please try again."
-      });
+      })
     }
-  };
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock className="h-5 w-5 text-muted-foreground" />;
+        return <Clock className="h-5 w-5 text-muted-foreground" />
       case 'sent':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />
       case 'failed':
-        return <XCircle className="h-5 w-5 text-red-500" />;
+        return <XCircle className="h-5 w-5 text-red-500" />
       default:
-        return <AlertCircle className="h-5 w-5 text-muted-foreground" />;
+        return <AlertCircle className="h-5 w-5 text-muted-foreground" />
     }
-  };
+  }
+
+  // If user is not logged in, show nothing
+  if (!user) {
+    return null
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      {/* Storage Type Indicator */}
-      <div className={cn(
-        "fixed top-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all",
-        storageType === 'firebase'
-          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" 
-          : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-      )}>
+      {/* Real-time indicator */}
+      <div className="fixed top-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
         <Database className="h-3 w-3" />
-        <span>{storageType === 'firebase' ? 'Firebase' : 'Local Storage'}</span>
+        <span>Supabase Real-time</span>
       </div>
 
       <div className="flex-1 container py-24 px-4 md:px-6">
@@ -275,7 +246,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span>{storageType === 'firebase' ? 'Real-time updates' : 'Local storage'}</span>
+            <span>Real-time updates</span>
           </div>
         </div>
         
@@ -429,7 +400,7 @@ export default function DashboardPage() {
                   <span>My Scheduled Messages</span>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Database className="h-3 w-3" />
-                    <span>{storageType}</span>
+                    <span>Supabase</span>
                   </div>
                 </CardTitle>
                 <CardDescription>
@@ -450,7 +421,10 @@ export default function DashboardPage() {
                     <Button 
                       variant="outline" 
                       className="mt-4"
-                      onClick={() => document.querySelector('[value="schedule"]')?.dispatchEvent(new Event('click'))}
+                      onClick={() => {
+                        const scheduleTab = document.querySelector('[value="schedule"]') as HTMLElement
+                        scheduleTab?.click()
+                      }}
                     >
                       Schedule Your First Message
                     </Button>
@@ -517,5 +491,5 @@ export default function DashboardPage() {
       </div>
       <Footer />
     </div>
-  );
+  )
 }

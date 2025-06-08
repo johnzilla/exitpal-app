@@ -1,16 +1,10 @@
-import Link from "next/link";
-import { Metadata } from "next";
-import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { PhoneCall, MessageSquare, Clock, Shield, ArrowRight, Zap, Bug } from "lucide-react";
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
+import { PhoneCall, MessageSquare, Clock, Shield, ArrowRight, Zap, Bug } from 'lucide-react'
 
-export const metadata: Metadata = {
-  title: "ExitPal - Your Social Escape Button",
-  description: "Schedule text or voice messages to help you exit awkward social situations",
-};
-
-export default function Home() {
+export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -48,12 +42,12 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link href="/signup">
+              <Link to="/signup">
                 <Button size="lg" className="w-full">
                   Try Beta Version <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/login">
+              <Link to="/login">
                 <Button variant="outline" size="lg" className="w-full">
                   Log In
                 </Button>
@@ -214,7 +208,7 @@ export default function Home() {
               Join ExitPal's beta program and help us improve the app while gaining your social freedom.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 min-[400px]:flex-row">
-              <Link href="/signup">
+              <Link to="/signup">
                 <Button size="lg" variant="secondary" className="w-full">
                   Try Beta Version
                 </Button>
@@ -229,5 +223,5 @@ export default function Home() {
 
       <Footer />
     </div>
-  );
+  )
 }
