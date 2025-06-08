@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '../src/lib/supabase'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 
 type User = {
