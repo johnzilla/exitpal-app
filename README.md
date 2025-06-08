@@ -75,7 +75,7 @@ This project is configured for deployment on Netlify. Connect your GitHub reposi
 
 ## License
 
-MIT
+Apache License 2.0 
 
 ## Acknowledgements
 
