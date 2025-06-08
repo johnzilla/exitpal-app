@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,20 +20,14 @@ export default function PremiumPage() {
   const { toast } = useToast();
   const [selectedNumberId, setSelectedNumberId] = useState<string>("");
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [isClient, setIsClient] = useState(false);
   
   const availableNumbers = getAvailableTwilioNumbers();
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    // Only redirect after client-side hydration
-    if (isClient && !user) {
-      router.push("/login");
-    }
-  }, [user, router, isClient]);
+  // If user is not logged in, redirect to login
+  if (!user) {
+    router.push("/login");
+    return null;
+  }
 
   const handleNumberSelection = (numberId: string) => {
     setSelectedNumberId(numberId);
@@ -54,45 +48,20 @@ export default function PremiumPage() {
 
   const handleMockPayment = () => {
     // Simulate successful payment
-    if (user) {
-      updateUser({ isPremium: true });
-      
-      toast({
-        title: "Upgraded to Premium!",
-        description: "You now have access to all premium features."
-      });
-      
-      setShowPaymentDialog(false);
-      
-      // Redirect to dashboard
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-    }
+    updateUser({ isPremium: true });
+    
+    toast({
+      title: "Upgraded to Premium!",
+      description: "You now have access to all premium features."
+    });
+    
+    setShowPaymentDialog(false);
+    
+    // Redirect to dashboard
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 1500);
   };
-
-  // Show loading state during SSR and initial client render
-  if (!isClient || !user) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <div className="flex-1 container py-24 px-4 md:px-6">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold mb-2">Upgrade to Premium</h1>
-              <p className="text-muted-foreground">
-                Get access to exclusive features and premium phone numbers
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <div className="animate-pulse">Loading...</div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen">

@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { PhoneCall, MessageSquare, Clock, Shield, ArrowRight, Zap, Bug } from "lucide-react";
+import { PhoneCall, MessageSquare, Clock, Shield, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "ExitPal - Your Social Escape Button",
@@ -15,19 +15,6 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      {/* Hackathon Banner */}
-      <section className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3">
-        <div className="container px-4 md:px-6">
-          <div className="flex items-center justify-center text-center space-x-2">
-            <Zap className="h-4 w-4" />
-            <span className="text-sm font-medium">
-              🚀 Built for the Bolt.new Hackathon • Fresh out of the code oven!
-            </span>
-            <Zap className="h-4 w-4" />
-          </div>
-        </div>
-      </section>
-
       {/* Hero Section */}
       <section className="pt-24 md:pt-32 pb-12 md:pb-24">
         <div className="container px-4 md:px-6">
@@ -39,16 +26,6 @@ export default function Home() {
               <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                 Schedule text or voice messages to help you exit awkward social situations. Never be stuck in an uncomfortable conversation again.
               </p>
-              
-              {/* Beta Notice */}
-              <div className="mx-auto max-w-[600px] mt-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-center justify-center space-x-2 text-amber-800 dark:text-amber-200">
-                  <Bug className="h-4 w-4" />
-                  <span className="text-sm font-medium">
-                    🧪 Beta Access • Expect some quirks while we perfect your escape routes!
-                  </span>
-                </div>
-              </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/signup">
@@ -177,32 +154,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Hackathon Info Section */}
-      <section className="py-12 md:py-24 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <div className="inline-block rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 text-sm font-medium">
-              🏆 Hackathon Project
-            </div>
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-              Built with Lightning Speed ⚡
-            </h2>
-            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed">
-              This app was crafted during the Bolt.new hackathon using cutting-edge AI development tools. 
-              We're still ironing out the wrinkles, so if you encounter any bugs, consider them "features in disguise"! 
-              Your feedback helps us make ExitPal even better.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 text-sm text-muted-foreground">
-              <span>🛠️ Built with Bolt.new</span>
-              <span>•</span>
-              <span>🚧 Beta Version</span>
-              <span>•</span>
-              <span>🐛 Bug Reports Welcome</span>
-            </div>
-          </div>
-        </div>
-      </section>
       
       {/* CTA Section */}
       <section className="py-12 md:py-24 bg-primary text-primary-foreground">
@@ -212,7 +163,7 @@ export default function Home() {
               Ready to Never Be Stuck Again?
             </h2>
             <p className="mx-auto max-w-[700px] text-muted md:text-xl/relaxed">
-              Join ExitPal today and take control of your social situations. Beta bugs included at no extra charge! 😉
+              Join ExitPal today and take control of your social situations.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 min-[400px]:flex-row">
               <Link href="/signup">

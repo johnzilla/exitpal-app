@@ -39,12 +39,13 @@ export const scheduleMessage = async (message: Omit<ScheduledMessage, 'id' | 'cr
       createdAt: new Date()
     };
     
-    // Save to localStorage
+    // In a real app, we would save to a database
     const existingMessages = getMessagesFromStorage(message.userId);
     const updatedMessages = [...existingMessages, newMessage];
     localStorage.setItem(`exitpal-messages-${message.userId}`, JSON.stringify(updatedMessages));
     
-    // Simulate message sending with setTimeout
+    // In a real app, we would schedule the message using a job scheduler
+    // For demo purposes, we'll use setTimeout to simulate message sending
     simulateMessageSending(newMessage);
     
     return newMessage;
@@ -69,7 +70,7 @@ export const cancelMessage = (userId: string, messageId: string): boolean => {
       return false;
     }
     
-    // Remove the message
+    // Update the message status
     messages.splice(messageIndex, 1);
     localStorage.setItem(`exitpal-messages-${userId}`, JSON.stringify(messages));
     
@@ -104,7 +105,6 @@ export const updateMessageStatus = (userId: string, messageId: string, status: M
 // Helper function to get messages from localStorage
 const getMessagesFromStorage = (userId: string): ScheduledMessage[] => {
   try {
-    if (typeof window === 'undefined') return []; // Handle SSR
     const messagesJson = localStorage.getItem(`exitpal-messages-${userId}`);
     return messagesJson ? JSON.parse(messagesJson) : [];
   } catch (error) {
@@ -122,8 +122,8 @@ const simulateMessageSending = (message: ScheduledMessage) => {
   setTimeout(() => {
     console.log(`Simulating sending ${message.messageType} to ${message.phoneNumber}`);
     
-    // Simulate 90% success rate
-    const success = Math.random() > 0.1;
+    // In a real app, we would call Twilio API here
+    const success = Math.random() > 0.1; // 90% success rate for simulation
     
     updateMessageStatus(
       message.userId, 
@@ -131,54 +131,4 @@ const simulateMessageSending = (message: ScheduledMessage) => {
       success ? 'sent' : 'failed'
     );
   }, delay);
-};
-
-// Mock function to send SMS (for immediate sending)
-export const sendSMS = async (
-  to: string,
-  body: string,
-  from: string = getDefaultTwilioNumber()
-): Promise<{ success: boolean; messageId?: string; error?: string }> => {
-  console.log(`[MOCK] Sending SMS from ${from} to ${to}: ${body}`);
-  
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Simulate success (90% of the time)
-  if (Math.random() > 0.1) {
-    return {
-      success: true,
-      messageId: `SM${Math.random().toString(36).substring(2, 12)}`,
-    };
-  } else {
-    return {
-      success: false,
-      error: 'Failed to send SMS. Please try again.',
-    };
-  }
-};
-
-// Mock function to make a voice call (for immediate calling)
-export const makeVoiceCall = async (
-  to: string,
-  message: string,
-  from: string = getDefaultTwilioNumber()
-): Promise<{ success: boolean; callId?: string; error?: string }> => {
-  console.log(`[MOCK] Making voice call from ${from} to ${to} with message: ${message}`);
-  
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Simulate success (90% of the time)
-  if (Math.random() > 0.1) {
-    return {
-      success: true,
-      callId: `CA${Math.random().toString(36).substring(2, 12)}`,
-    };
-  } else {
-    return {
-      success: false,
-      error: 'Failed to make voice call. Please try again.',
-    };
-  }
 };

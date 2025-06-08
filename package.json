@@ -42,7 +42,6 @@
     "@types/react": "18.2.22",
     "@types/react-dom": "18.2.7",
     "autoprefixer": "10.4.15",
-    "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -51,8 +50,6 @@
     "eslint": "8.49.0",
     "eslint-config-next": "13.5.1",
     "input-otp": "^1.2.4",
-    "jsonwebtoken": "^9.0.2",
-    "libsql": "^0.4.5",
     "lucide-react": "^0.446.0",
     "next": "13.5.1",
     "next-themes": "^0.3.0",
@@ -75,8 +72,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.6",
     "@types/uuid": "^9.0.8"
   }
 }
