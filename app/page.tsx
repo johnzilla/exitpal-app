@@ -82,7 +82,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 pt-12">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 pt-12">
             {/* Feature 1 */}
             <div className="flex flex-col items-center space-y-4 rounded-lg border p-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
@@ -117,7 +117,7 @@ export default function Home() {
             </div>
             
             {/* Feature 4 */}
-            <div className="flex flex-col items-center space-y-4 rounded-lg border p-4 md:col-span-2 lg:col-span-1">
+            <div className="flex flex-col items-center space-y-4 rounded-lg border p-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <Shield className="h-8 w-8 text-primary" />
               </div>
