@@ -6,6 +6,8 @@ ExitPal is a web application that helps users exit awkward social situations by 
 
 **[Visit ExitPal →](https://www.exitpal.app)**
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/ced34ba0-22aa-4585-99cc-0622e4026b27/deploy-status)](https://app.netlify.com/projects/exitpal/deploys)
+
 ## Features
 
 - User authentication (email/password and Google OAuth via Supabase)
