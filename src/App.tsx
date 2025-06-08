@@ -4,11 +4,11 @@ import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/components/auth-provider'
 
 // Pages
-import HomePage from '@/pages/HomePage'
-import LoginPage from '@/pages/LoginPage'
-import SignupPage from '@/pages/SignupPage'
-import DashboardPage from '@/pages/DashboardPage'
-import PremiumPage from '@/pages/PremiumPage'
+import HomePage from './pages/HomePage'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
+import DashboardPage from './pages/DashboardPage'
+import PremiumPage from './pages/PremiumPage'
 
 function App() {
   return (
