@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { useAuth } from '../components/auth-provider'
+import { isSupabaseConfigured } from '../lib/supabase'
 import { 
   ScheduledMessage, 
   scheduleMessage, 
@@ -35,7 +36,8 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  Database
+  Database,
+  HardDrive
 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
@@ -57,6 +59,8 @@ export default function DashboardPage() {
     messageType: "sms" as MessageType,
     phoneNumber: ""
   })
+
+  const isUsingSupabase = isSupabaseConfigured()
 
   useEffect(() => {
     // If user is not logged in, redirect to login page
@@ -234,10 +238,19 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      {/* Real-time indicator */}
+      {/* Storage indicator */}
       <div className="fixed top-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-        <Database className="h-3 w-3" />
-        <span>Supabase Real-time</span>
+        {isUsingSupabase ? (
+          <>
+            <Database className="h-3 w-3" />
+            <span>Supabase Real-time</span>
+          </>
+        ) : (
+          <>
+            <HardDrive className="h-3 w-3" />
+            <span>Demo Mode (LocalStorage)</span>
+          </>
+        )}
       </div>
 
       <div className="flex-1 container py-24 px-4 md:px-6">
@@ -245,9 +258,22 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span>Real-time updates</span>
+            <span>{isUsingSupabase ? 'Real-time updates' : 'Demo mode'}</span>
           </div>
         </div>
+
+        {!isUsingSupabase && (
+          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+              <AlertCircle className="h-4 w-4" />
+              <span className="font-medium">Demo Mode</span>
+            </div>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+              Supabase is not configured. Your data is stored locally and will be lost when you clear your browser data.
+              To set up real database storage, configure your Supabase credentials in the .env file.
+            </p>
+          </div>
+        )}
         
         <Tabs defaultValue="schedule" className="w-full">
           <TabsList className="mb-4">
@@ -398,8 +424,17 @@ export default function DashboardPage() {
                 <CardTitle className="flex items-center justify-between">
                   <span>My Scheduled Messages</span>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Database className="h-3 w-3" />
-                    <span>Supabase</span>
+                    {isUsingSupabase ? (
+                      <>
+                        <Database className="h-3 w-3" />
+                        <span>Supabase</span>
+                      </>
+                    ) : (
+                      <>
+                        <HardDrive className="h-3 w-3" />
+                        <span>LocalStorage</span>
+                      </>
+                    )}
                   </div>
                 </CardTitle>
                 <CardDescription>

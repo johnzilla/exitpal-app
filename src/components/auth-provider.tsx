@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 
 type User = {
@@ -29,26 +29,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check if user is logged in on initial load
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
-      if (session?.user) {
-        loadUserProfile(session.user)
-      } else {
+    const initAuth = async () => {
+      console.log('🔧 Checking Supabase configuration...')
+      console.log('🔧 Supabase configured:', isSupabaseConfigured())
+      
+      if (!isSupabaseConfigured()) {
+        console.log('⚠️ Supabase not configured, using localStorage fallback')
+        // Check localStorage for demo user
+        const storedUser = localStorage.getItem("exitpal-user")
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser)
+            setUser(parsedUser)
+            console.log('✅ Loaded user from localStorage:', parsedUser)
+          } catch (error) {
+            console.error('❌ Error parsing stored user:', error)
+            localStorage.removeItem("exitpal-user")
+          }
+        }
+        setLoading(false)
+        return
+      }
+
+      // Get initial session from Supabase
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          await loadUserProfile(session.user)
+        } else {
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('❌ Error getting session:', error)
         setLoading(false)
       }
-    })
+    }
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
-      if (session?.user) {
-        await loadUserProfile(session.user)
-      } else {
-        setUser(null)
-        setLoading(false)
-      }
-    })
+    initAuth()
 
-    return () => subscription.unsubscribe()
+    // Only set up auth listener if Supabase is configured
+    if (isSupabaseConfigured()) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
+        if (session?.user) {
+          await loadUserProfile(session.user)
+        } else {
+          setUser(null)
+          setLoading(false)
+        }
+      })
+
+      return () => subscription.unsubscribe()
+    }
   }, [])
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
@@ -102,12 +133,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('💥 Error loading user profile:', error)
-      // Log additional context
-      console.error('🔍 Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        supabaseUser: supabaseUser
-      })
     } finally {
       setLoading(false)
     }
@@ -118,6 +143,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('🔐 Attempting login for:', email)
     
     try {
+      if (!isSupabaseConfigured()) {
+        console.log('⚠️ Using demo login (Supabase not configured)')
+        // Demo login - simulate successful authentication
+        const mockUser = {
+          id: "demo-user-" + Date.now(),
+          email,
+          phone: "",
+          isPremium: false
+        }
+        
+        localStorage.setItem("exitpal-user", JSON.stringify(mockUser))
+        setUser(mockUser)
+        navigate('/dashboard')
+        return
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -143,16 +184,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('📝 Attempting signup for:', email, 'with phone:', phone)
     
     try {
-      // Check if Supabase is configured
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      
-      console.log('🔧 Supabase config check:', {
-        hasUrl: !!supabaseUrl,
-        hasKey: !!supabaseKey,
-        urlValid: supabaseUrl !== 'https://placeholder.supabase.co',
-        keyValid: supabaseKey !== 'placeholder-key'
-      })
+      if (!isSupabaseConfigured()) {
+        console.log('⚠️ Using demo signup (Supabase not configured)')
+        // Demo signup - simulate successful registration
+        const mockUser = {
+          id: "demo-user-" + Date.now(),
+          email,
+          phone: phone || "",
+          isPremium: false
+        }
+        
+        localStorage.setItem("exitpal-user", JSON.stringify(mockUser))
+        setUser(mockUser)
+        navigate('/dashboard')
+        return
+      }
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -168,33 +214,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('❌ Signup failed:', error)
-        console.error('🔍 Error details:', {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        })
         throw error
       }
       
       console.log('✅ Signup successful:', data)
-      
-      // If email confirmation is disabled, user should be logged in immediately
-      if (data.user && !data.user.email_confirmed_at) {
-        console.log('📧 Email confirmation required')
-      }
-      
       navigate('/dashboard')
     } catch (error) {
       console.error('💥 Signup error:', error)
-      
-      // Log additional context for debugging
-      console.error('🔍 Full error context:', {
-        error,
-        email,
-        hasPhone: !!phone,
-        timestamp: new Date().toISOString()
-      })
-      
       throw error
     } finally {
       setLoading(false)
@@ -206,6 +232,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('🔍 Attempting Google sign-in')
     
     try {
+      if (!isSupabaseConfigured()) {
+        console.log('⚠️ Using demo Google sign-in (Supabase not configured)')
+        // Demo Google sign-in
+        const mockUser = {
+          id: "google-demo-user-" + Date.now(),
+          email: "demo@gmail.com",
+          phone: "",
+          isPremium: false
+        }
+        
+        localStorage.setItem("exitpal-user", JSON.stringify(mockUser))
+        setUser(mockUser)
+        navigate('/dashboard')
+        return
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -229,6 +271,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     console.log('🚪 Logging out user')
+    
+    if (!isSupabaseConfigured()) {
+      // Demo logout
+      localStorage.removeItem("exitpal-user")
+      setUser(null)
+      navigate('/')
+      return
+    }
+
     await supabase.auth.signOut()
     setUser(null)
     navigate('/')
@@ -240,6 +291,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('🔄 Updating user:', userData)
     
     try {
+      if (!isSupabaseConfigured()) {
+        // Demo update
+        const updatedUser = { ...user, ...userData }
+        localStorage.setItem("exitpal-user", JSON.stringify(updatedUser))
+        setUser(updatedUser)
+        return
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({

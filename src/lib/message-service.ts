@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export type MessageType = 'sms' | 'voice'
 export type MessageStatus = 'pending' | 'sent' | 'failed'
@@ -40,11 +40,58 @@ const convertToScheduledMessage = (row: any): ScheduledMessage => ({
   createdAt: new Date(row.created_at)
 })
 
+// LocalStorage fallback functions
+const getMessagesFromLocalStorage = (userId: string): ScheduledMessage[] => {
+  try {
+    const stored = localStorage.getItem(`exitpal-messages-${userId}`)
+    if (!stored) return []
+    
+    const messages = JSON.parse(stored)
+    return messages.map((msg: any) => ({
+      ...msg,
+      scheduledTime: new Date(msg.scheduledTime),
+      createdAt: new Date(msg.createdAt)
+    }))
+  } catch (error) {
+    console.error('Error loading messages from localStorage:', error)
+    return []
+  }
+}
+
+const saveMessagesToLocalStorage = (userId: string, messages: ScheduledMessage[]) => {
+  try {
+    localStorage.setItem(`exitpal-messages-${userId}`, JSON.stringify(messages))
+  } catch (error) {
+    console.error('Error saving messages to localStorage:', error)
+  }
+}
+
 /**
- * Schedule a new message using Supabase
+ * Schedule a new message using Supabase or localStorage fallback
  */
 export const scheduleMessage = async (message: Omit<ScheduledMessage, 'id' | 'createdAt'>): Promise<ScheduledMessage> => {
   try {
+    if (!isSupabaseConfigured()) {
+      console.log('⚠️ Using localStorage for message storage (Supabase not configured)')
+      
+      // Create message with localStorage
+      const newMessage: ScheduledMessage = {
+        ...message,
+        id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        createdAt: new Date()
+      }
+      
+      // Get existing messages and add new one
+      const existingMessages = getMessagesFromLocalStorage(message.userId)
+      const updatedMessages = [...existingMessages, newMessage]
+      saveMessagesToLocalStorage(message.userId, updatedMessages)
+      
+      // Schedule the message sending simulation
+      simulateMessageSending(newMessage)
+      
+      return newMessage
+    }
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
@@ -74,10 +121,15 @@ export const scheduleMessage = async (message: Omit<ScheduledMessage, 'id' | 'cr
 }
 
 /**
- * Get all messages for a user using Supabase
+ * Get all messages for a user using Supabase or localStorage fallback
  */
 export const getMessagesByUserId = async (userId: string): Promise<ScheduledMessage[]> => {
   try {
+    if (!isSupabaseConfigured()) {
+      console.log('⚠️ Using localStorage for message retrieval (Supabase not configured)')
+      return getMessagesFromLocalStorage(userId)
+    }
+
     const { data, error } = await supabase
       .from('messages')
       .select('*')
@@ -94,10 +146,20 @@ export const getMessagesByUserId = async (userId: string): Promise<ScheduledMess
 }
 
 /**
- * Cancel a pending message using Supabase
+ * Cancel a pending message using Supabase or localStorage fallback
  */
 export const cancelMessage = async (userId: string, messageId: string): Promise<boolean> => {
   try {
+    if (!isSupabaseConfigured()) {
+      console.log('⚠️ Using localStorage for message cancellation (Supabase not configured)')
+      
+      const existingMessages = getMessagesFromLocalStorage(userId)
+      const updatedMessages = existingMessages.filter(msg => msg.id !== messageId)
+      saveMessagesToLocalStorage(userId, updatedMessages)
+      
+      return true
+    }
+
     const { error } = await supabase
       .from('messages')
       .delete()
@@ -113,10 +175,35 @@ export const cancelMessage = async (userId: string, messageId: string): Promise<
 }
 
 /**
- * Update message status using Supabase
+ * Update message status using Supabase or localStorage fallback
  */
 export const updateMessageStatus = async (messageId: string, status: MessageStatus): Promise<boolean> => {
   try {
+    if (!isSupabaseConfigured()) {
+      console.log('⚠️ Using localStorage for message status update (Supabase not configured)')
+      
+      // For localStorage, we need to find the message across all users
+      // This is a simplified approach for demo purposes
+      const keys = Object.keys(localStorage).filter(key => key.startsWith('exitpal-messages-'))
+      
+      for (const key of keys) {
+        try {
+          const messages = JSON.parse(localStorage.getItem(key) || '[]')
+          const messageIndex = messages.findIndex((msg: any) => msg.id === messageId)
+          
+          if (messageIndex !== -1) {
+            messages[messageIndex].status = status
+            localStorage.setItem(key, JSON.stringify(messages))
+            return true
+          }
+        } catch (error) {
+          console.error('Error updating message in localStorage:', error)
+        }
+      }
+      
+      return false
+    }
+
     const { error } = await supabase
       .from('messages')
       .update({ status })
@@ -131,12 +218,29 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
 }
 
 /**
- * Subscribe to real-time message updates using Supabase
+ * Subscribe to real-time message updates using Supabase or polling fallback
  */
 export const subscribeToMessages = (
   userId: string, 
   callback: (messages: ScheduledMessage[]) => void
 ): (() => void) => {
+  if (!isSupabaseConfigured()) {
+    console.log('⚠️ Using polling for message updates (Supabase not configured)')
+    
+    // Initial load
+    getMessagesByUserId(userId).then(callback)
+
+    // Set up polling every 5 seconds for demo
+    const interval = setInterval(() => {
+      getMessagesByUserId(userId).then(callback)
+    }, 5000)
+
+    // Return cleanup function
+    return () => {
+      clearInterval(interval)
+    }
+  }
+
   // Initial load
   getMessagesByUserId(userId).then(callback)
 
