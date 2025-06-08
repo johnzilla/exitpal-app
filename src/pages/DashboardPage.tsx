@@ -12,6 +12,7 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { useAuth } from '../components/auth-provider'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { UsageIndicator } from '../components/usage-indicator'
 import { 
   ScheduledMessage, 
   scheduleMessage, 
@@ -37,7 +38,8 @@ import {
   CheckCircle2,
   XCircle,
   Database,
-  HardDrive
+  HardDrive,
+  Zap
 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
@@ -140,13 +142,13 @@ export default function DashboardPage() {
     const scheduledTime = new Date(date)
     scheduledTime.setHours(hours, minutes)
     
-    // Ensure the scheduled time is at least 10 minutes in the future
-    const minTime = new Date(Date.now() + 10 * 60 * 1000)
+    // Ensure the scheduled time is at least 1 minute in the future for testing
+    const minTime = new Date(Date.now() + 1 * 60 * 1000)
     if (scheduledTime < minTime) {
       toast({
         variant: "destructive",
         title: "Invalid time",
-        description: "Scheduled time must be at least 10 minutes in the future."
+        description: "Scheduled time must be at least 1 minute in the future."
       })
       return
     }
@@ -243,12 +245,12 @@ export default function DashboardPage() {
         {isUsingSupabase ? (
           <>
             <Database className="h-3 w-3" />
-            <span>Supabase Real-time</span>
+            <span>Supabase + Twilio</span>
           </>
         ) : (
           <>
             <HardDrive className="h-3 w-3" />
-            <span>Demo Mode (LocalStorage)</span>
+            <span>Demo Mode</span>
           </>
         )}
       </div>
@@ -262,6 +264,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Usage Indicator */}
+        <UsageIndicator />
+
         {!isUsingSupabase && (
           <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
             <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
@@ -269,8 +274,20 @@ export default function DashboardPage() {
               <span className="font-medium">Demo Mode</span>
             </div>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-              Supabase is not configured. Your data is stored locally and will be lost when you clear your browser data.
-              To set up real database storage, configure your Supabase credentials in the .env file.
+              Supabase is not configured. Your data is stored locally and messages are simulated.
+              To enable real Twilio integration, configure your Supabase credentials.
+            </p>
+          </div>
+        )}
+
+        {isUsingSupabase && (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
+              <Zap className="h-4 w-4" />
+              <span className="font-medium">Twilio Integration Active</span>
+            </div>
+            <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+              Real SMS and voice messages will be sent via Twilio. Usage limits apply to prevent runaway costs.
             </p>
           </div>
         )}

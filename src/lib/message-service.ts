@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase'
+import { sendMessage as sendTwilioMessage } from './twilio-service'
 
 export type MessageType = 'sms' | 'voice'
 export type MessageStatus = 'pending' | 'sent' | 'failed'
@@ -13,6 +14,7 @@ export interface ScheduledMessage {
   messageType: MessageType
   status: MessageStatus
   createdAt: Date
+  twilioSid?: string
 }
 
 // Mock function to get the Twilio number (would be environment variable in production)
@@ -37,7 +39,8 @@ const convertToScheduledMessage = (row: any): ScheduledMessage => ({
   scheduledTime: new Date(row.scheduled_time),
   messageType: row.message_type,
   status: row.status,
-  createdAt: new Date(row.created_at)
+  createdAt: new Date(row.created_at),
+  twilioSid: row.twilio_sid
 })
 
 // LocalStorage fallback functions
@@ -110,8 +113,8 @@ export const scheduleMessage = async (message: Omit<ScheduledMessage, 'id' | 'cr
 
     const newMessage = convertToScheduledMessage(data)
     
-    // Schedule the message sending simulation
-    simulateMessageSending(newMessage)
+    // Schedule the message sending
+    scheduleMessageSending(newMessage)
     
     return newMessage
   } catch (error) {
@@ -177,7 +180,7 @@ export const cancelMessage = async (userId: string, messageId: string): Promise<
 /**
  * Update message status using Supabase or localStorage fallback
  */
-export const updateMessageStatus = async (messageId: string, status: MessageStatus): Promise<boolean> => {
+export const updateMessageStatus = async (messageId: string, status: MessageStatus, twilioSid?: string): Promise<boolean> => {
   try {
     if (!isSupabaseConfigured()) {
       console.log('⚠️ Using localStorage for message status update (Supabase not configured)')
@@ -193,6 +196,9 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
           
           if (messageIndex !== -1) {
             messages[messageIndex].status = status
+            if (twilioSid) {
+              messages[messageIndex].twilioSid = twilioSid
+            }
             localStorage.setItem(key, JSON.stringify(messages))
             return true
           }
@@ -204,9 +210,14 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
       return false
     }
 
+    const updateData: any = { status }
+    if (twilioSid) {
+      updateData.twilio_sid = twilioSid
+    }
+
     const { error } = await supabase
       .from('messages')
-      .update({ status })
+      .update(updateData)
       .eq('id', messageId)
 
     if (error) throw error
@@ -269,7 +280,41 @@ export const subscribeToMessages = (
 }
 
 /**
- * Mock function to simulate message sending after the scheduled time
+ * Schedule message sending using real Twilio integration
+ */
+const scheduleMessageSending = (message: ScheduledMessage) => {
+  const scheduledTime = new Date(message.scheduledTime).getTime()
+  const currentTime = new Date().getTime()
+  const delay = Math.max(0, scheduledTime - currentTime)
+  
+  setTimeout(async () => {
+    console.log(`🚀 Sending ${message.messageType} to ${message.phoneNumber}`)
+    
+    try {
+      // Use real Twilio integration
+      const result = await sendTwilioMessage(
+        message.id,
+        message.messageType,
+        message.phoneNumber,
+        message.messageContent
+      )
+      
+      if (result.success) {
+        console.log('✅ Message sent successfully:', result.twilioSid)
+        await updateMessageStatus(message.id, 'sent', result.twilioSid)
+      } else {
+        console.error('❌ Message failed:', result.error)
+        await updateMessageStatus(message.id, 'failed')
+      }
+    } catch (error) {
+      console.error('💥 Error sending message:', error)
+      await updateMessageStatus(message.id, 'failed')
+    }
+  }, delay)
+}
+
+/**
+ * Mock function to simulate message sending (fallback)
  */
 const simulateMessageSending = (message: ScheduledMessage) => {
   const scheduledTime = new Date(message.scheduledTime).getTime()
