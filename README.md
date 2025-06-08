@@ -2,6 +2,10 @@
 
 ExitPal is a web application that helps users exit awkward social situations by scheduling text or voice messages to their phone. This app was built for the Bolt.new hackathon demo.
 
+## 🚀 Live Demo
+
+**[Visit ExitPal →](https://www.exitpal.app)**
+
 ## Features
 
 - User authentication (email/password and Google OAuth via Supabase)
@@ -76,14 +80,43 @@ npm run build
 npm run preview
 ```
 
-### Deployment
+## Deployment on Netlify
 
-This project is configured for deployment on Netlify as a static site:
+### Step 1: Connect Repository
+1. Go to [Netlify Dashboard](https://app.netlify.com)
+2. Click "New site from Git"
+3. Connect your GitHub repository
 
-1. Connect your GitHub repository to Netlify
-2. Set build command: `npm run build`
-3. Set publish directory: `dist`
-4. Add environment variables in Netlify dashboard
+### Step 2: Build Settings
+- **Build command**: `npm run build`
+- **Publish directory**: `dist`
+- **Node version**: 18
+
+### Step 3: Environment Variables
+In your Netlify site dashboard, go to **Site settings → Environment variables** and add:
+
+```
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Important**: Replace these with your actual Supabase credentials from your [Supabase Dashboard](https://supabase.com/dashboard).
+
+### Step 4: Deploy
+Click "Deploy site" and your app will be live!
+
+## Environment Variables Security
+
+**Q: Are environment variables secure when deployed?**
+
+For Supabase, **yes, this is the intended design**:
+
+- `VITE_SUPABASE_ANON_KEY` is **meant to be public** (it's called "anonymous" for a reason)
+- Security comes from **Row Level Security (RLS)** policies in your database
+- You can restrict which domains can access your Supabase project
+- Supabase has built-in rate limiting and abuse protection
+
+**Never put sensitive keys** (like `SUPABASE_SERVICE_ROLE_KEY`) in client-side environment variables.
 
 ## Project Structure
 
@@ -98,6 +131,7 @@ This project is configured for deployment on Netlify as a static site:
 ├── hooks/                  # Custom React hooks
 ├── lib/                    # Shared utilities
 ├── public/                 # Static assets
+├── supabase/              # Database migrations
 └── dist/                   # Build output (generated)
 ```
 
@@ -162,14 +196,28 @@ For a production deployment, you would want to:
 - Add analytics and monitoring
 - Enhance security with proper API key management
 
-## Environment Variables
+## Troubleshooting
+
+### "Supabase not configured" Error
+If you see this error on your deployed site:
+
+1. **Check Netlify Environment Variables**: Go to your Netlify site dashboard → Site settings → Environment variables
+2. **Verify Supabase Credentials**: Make sure your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are correct
+3. **Redeploy**: After adding environment variables, trigger a new deployment
+
+### Local Development Issues
+- Make sure your `.env` file is in the project root
+- Restart your dev server after changing environment variables
+- Check that your Supabase project is active and accessible
+
+## Environment Variables Reference
 
 ```bash
-# Supabase Configuration
-VITE_SUPABASE_URL=your-project-url
-VITE_SUPABASE_ANON_KEY=your-anon-key
+# Required for Supabase integration
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# Twilio Configuration (for future use)
+# Optional - Twilio (currently mocked)
 VITE_TWILIO_ACCOUNT_SID=AC1234567890abcdef1234567890abcdef
 VITE_TWILIO_AUTH_TOKEN=1234567890abcdef1234567890abcdef
 VITE_TWILIO_DEFAULT_NUMBER=+12312345678

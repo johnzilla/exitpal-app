@@ -5,22 +5,29 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# SPA redirect - important for React Router
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Remove Next.js specific configurations
-[build.processing]
-  skip_processing = false
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
 
-[build.processing.css]
-  bundle = true
-  minify = true
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
-[build.processing.js]
-  bundle = true
-  minify = true
-
-[build.processing.html]
-  pretty_urls = true
+# Don't cache the main HTML file
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
