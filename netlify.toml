@@ -10,7 +10,7 @@
   to = "/index.html"
   status = 200
 
-# Force Netlify to use static site hosting instead of Next.js runtime
+# Remove Next.js specific configurations
 [build.processing]
   skip_processing = false
 
