@@ -17,7 +17,7 @@ import {
   cancelMessage,
   MessageType,
   subscribeToMessages
-} from '@/lib/message-service'
+} from '../lib/message-service'
 import {
   Table,
   TableBody,

@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { useAuth } from "../components/auth-provider"
-import { getAvailableTwilioNumbers } from "@/lib/message-service"
+import { getAvailableTwilioNumbers } from "../lib/message-service"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { CheckCircle2, CreditCard, Star } from "lucide-react"
 
