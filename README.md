@@ -190,7 +190,7 @@ Apache License 2.0
 
 ## Acknowledgements
 
-- Built with [Bolt.new](https://bolt.new) - AI-powered development platform
+- Built with ❤️ using [Bolt.new](https://bolt.new) - AI-powered development platform
 - UI components from [shadcn/ui](https://ui.shadcn.com)
 - Icons from [Lucide React](https://lucide.dev)
 - Database and auth by [Supabase](https://supabase.com)
@@ -199,4 +199,6 @@ Apache License 2.0
 
 ---
 
-**🚀 Built for the Bolt.new Hackathon 2024**
+**🚀 Built for the Bolt.new Hackathon 2025**
+
+&copy; 2025 ExitPal. All rights reserved.
