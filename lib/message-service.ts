@@ -42,7 +42,11 @@ export const scheduleMessage = async (message: Omit<ScheduledMessage, 'id' | 'cr
     // In a real app, we would save to a database
     const existingMessages = getMessagesFromStorage(message.userId);
     const updatedMessages = [...existingMessages, newMessage];
-    localStorage.setItem(`exitpal-messages-${message.userId}`, JSON.stringify(updatedMessages));
+    
+    // Only use localStorage if we're in the browser
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`exitpal-messages-${message.userId}`, JSON.stringify(updatedMessages));
+    }
     
     // In a real app, we would schedule the message using a job scheduler
     // For demo purposes, we'll use setTimeout to simulate message sending
@@ -72,7 +76,11 @@ export const cancelMessage = (userId: string, messageId: string): boolean => {
     
     // Update the message status
     messages.splice(messageIndex, 1);
-    localStorage.setItem(`exitpal-messages-${userId}`, JSON.stringify(messages));
+    
+    // Only use localStorage if we're in the browser
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`exitpal-messages-${userId}`, JSON.stringify(messages));
+    }
     
     return true;
   } catch (error) {
@@ -93,7 +101,11 @@ export const updateMessageStatus = (userId: string, messageId: string, status: M
     
     // Update the message status
     messages[messageIndex].status = status;
-    localStorage.setItem(`exitpal-messages-${userId}`, JSON.stringify(messages));
+    
+    // Only use localStorage if we're in the browser
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`exitpal-messages-${userId}`, JSON.stringify(messages));
+    }
     
     return true;
   } catch (error) {
@@ -105,6 +117,11 @@ export const updateMessageStatus = (userId: string, messageId: string, status: M
 // Helper function to get messages from localStorage
 const getMessagesFromStorage = (userId: string): ScheduledMessage[] => {
   try {
+    // Only use localStorage if we're in the browser
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    
     const messagesJson = localStorage.getItem(`exitpal-messages-${userId}`);
     return messagesJson ? JSON.parse(messagesJson) : [];
   } catch (error) {
@@ -115,6 +132,11 @@ const getMessagesFromStorage = (userId: string): ScheduledMessage[] => {
 
 // Mock function to simulate message sending after the scheduled time
 const simulateMessageSending = (message: ScheduledMessage) => {
+  // Only run in browser environment
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
   const scheduledTime = new Date(message.scheduledTime).getTime();
   const currentTime = new Date().getTime();
   const delay = Math.max(0, scheduledTime - currentTime);

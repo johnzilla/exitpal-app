@@ -29,6 +29,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check if user is logged in on initial load
   useEffect(() => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+    
     const storedUser = localStorage.getItem("exitpal-user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -48,7 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isPremium: false
       };
       
-      localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
+      // Only use localStorage if we're in the browser
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
+      }
       setUser(mockUser);
       router.push("/dashboard");
     } catch (error) {
@@ -70,7 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isPremium: false
       };
       
-      localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
+      // Only use localStorage if we're in the browser
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
+      }
       setUser(mockUser);
       router.push("/dashboard");
     } catch (error) {
@@ -92,7 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isPremium: false
       };
       
-      localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
+      // Only use localStorage if we're in the browser
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("exitpal-user", JSON.stringify(mockUser));
+      }
       setUser(mockUser);
       router.push("/dashboard");
     } catch (error) {
@@ -104,7 +119,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("exitpal-user");
+    // Only use localStorage if we're in the browser
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("exitpal-user");
+    }
     setUser(null);
     router.push("/");
   };
@@ -113,7 +131,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     
     const updatedUser = { ...user, ...userData };
-    localStorage.setItem("exitpal-user", JSON.stringify(updatedUser));
+    
+    // Only use localStorage if we're in the browser
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("exitpal-user", JSON.stringify(updatedUser));
+    }
     setUser(updatedUser);
   };
 
