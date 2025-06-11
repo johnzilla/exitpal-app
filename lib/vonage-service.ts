@@ -1,18 +1,18 @@
-// This is a mock Twilio service for demonstration purposes
-// In a real application, we would use the actual Twilio SDK and API
+// Vonage service for demonstration purposes
+// In a real application, we would use the actual Vonage SDK and API
 
 export type MessageType = 'sms' | 'voice'
 
 // Mock environment variables
-const TWILIO_DEFAULT_NUMBER = process.env.TWILIO_DEFAULT_NUMBER || '+12312345678'
+const VONAGE_DEFAULT_NUMBER = process.env.VONAGE_DEFAULT_NUMBER || '12312345678'
 
-// Mock function to send SMS via Twilio
+// Mock function to send SMS via Vonage
 export const sendSMS = async (
   to: string,
-  body: string,
-  from: string = TWILIO_DEFAULT_NUMBER
+  text: string,
+  from: string = VONAGE_DEFAULT_NUMBER
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
-  console.log(`[MOCK] Sending SMS from ${from} to ${to}: ${body}`)
+  console.log(`[MOCK] Sending SMS via Vonage from ${from} to ${to}: ${text}`)
   
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 1000))
@@ -21,48 +21,52 @@ export const sendSMS = async (
   if (Math.random() > 0.1) {
     return {
       success: true,
-      messageId: `SM${Math.random().toString(36).substring(2, 12)}`,
+      messageId: `vonage-${Math.random().toString(36).substring(2, 12)}`,
     }
   } else {
     return {
       success: false,
-      error: 'Failed to send SMS. Please try again.',
+      error: 'Failed to send SMS via Vonage. Please try again.',
     }
   }
 }
 
-// Mock function to make a voice call via Twilio
+// Mock function to make a voice call via Vonage
 export const makeVoiceCall = async (
   to: string,
   message: string,
-  from: string = TWILIO_DEFAULT_NUMBER
+  from: string = VONAGE_DEFAULT_NUMBER
 ): Promise<{ success: boolean; callId?: string; error?: string }> => {
-  console.log(`[MOCK] Making voice call from ${from} to ${to} with message: ${message}`)
+  console.log(`[MOCK] Making voice call via Vonage from ${from} to ${to} with message: ${message}`)
   
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 1000))
   
-  // Simulate TwiML for the voice call
-  const twiml = `
-    <?xml version="1.0" encoding="UTF-8"?>
-    <Response>
-        <Say>${message}</Say>
-        <Pause length="1"/>
-        <Say>This is an automated call from ExitPal.</Say>
-    </Response>
-  `
-  console.log(`[MOCK] TwiML: ${twiml}`)
+  // Simulate NCCO for the voice call
+  const ncco = [
+    {
+      action: "talk",
+      text: message,
+      voiceName: "Amy"
+    },
+    {
+      action: "talk",
+      text: "This is an automated call from ExitPal.",
+      voiceName: "Amy"
+    }
+  ]
+  console.log(`[MOCK] NCCO: ${JSON.stringify(ncco, null, 2)}`)
   
   // Simulate success (90% of the time)
   if (Math.random() > 0.1) {
     return {
       success: true,
-      callId: `CA${Math.random().toString(36).substring(2, 12)}`,
+      callId: `vonage-call-${Math.random().toString(36).substring(2, 12)}`,
     }
   } else {
     return {
       success: false,
-      error: 'Failed to make voice call. Please try again.',
+      error: 'Failed to make voice call via Vonage. Please try again.',
     }
   }
 }
@@ -72,7 +76,7 @@ export const sendMessage = async (
   type: MessageType,
   to: string,
   content: string,
-  from: string = TWILIO_DEFAULT_NUMBER
+  from: string = VONAGE_DEFAULT_NUMBER
 ): Promise<{ success: boolean; id?: string; error?: string }> => {
   if (type === 'sms') {
     return sendSMS(to, content, from)

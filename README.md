@@ -14,8 +14,8 @@ ExitPal is a web application that helps users exit awkward social situations by 
 - Dashboard for scheduling SMS and voice messages
 - Real-time message management with Supabase
 - Message status tracking (view and cancel pending messages)
-- Mock Twilio integration for sending SMS and making voice calls
-- Premium account features with Twilio number selection
+- Vonage integration for sending SMS and making voice calls
+- Premium account features with Vonage number selection
 - Dark/light theme support
 - Responsive design for mobile and desktop
 
@@ -26,7 +26,7 @@ ExitPal is a web application that helps users exit awkward social situations by 
 - **Routing**: React Router DOM
 - **Database**: Supabase (PostgreSQL with real-time subscriptions)
 - **Authentication**: Supabase Auth
-- **SMS & Voice**: Twilio (mocked for demo)
+- **SMS & Voice**: Vonage (formerly Nexmo)
 - **Deployment**: Netlify (static site)
 - **Icons**: Lucide React
 
@@ -36,6 +36,7 @@ ExitPal is a web application that helps users exit awkward social situations by 
 
 - Node.js 18+ and npm
 - Supabase account (optional - app works with mock data)
+- Vonage account for SMS/Voice functionality
 
 ### Installation
 
@@ -55,11 +56,12 @@ ExitPal is a web application that helps users exit awkward social situations by 
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
    
-   For Twilio (optional - currently mocked):
+   For Vonage (optional - currently mocked):
    ```
-   VITE_TWILIO_ACCOUNT_SID=your_account_sid
-   VITE_TWILIO_AUTH_TOKEN=your_auth_token
-   VITE_TWILIO_DEFAULT_NUMBER=your_twilio_number
+   VITE_VONAGE_API_KEY=your_api_key
+   VITE_VONAGE_API_SECRET=your_api_secret
+   VITE_VONAGE_APPLICATION_ID=your_application_id
+   VITE_VONAGE_DEFAULT_NUMBER=your_vonage_number
    ```
 
 ### Development
@@ -107,6 +109,34 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### Step 4: Deploy
 Click "Deploy site" and your app will be live!
 
+## Vonage Integration
+
+### Setting Up Vonage
+
+1. **Create a Vonage Account**: Sign up at [dashboard.nexmo.com](https://dashboard.nexmo.com)
+
+2. **Get API Credentials**: 
+   - API Key and API Secret from your dashboard
+   - For voice calls, create a Vonage Application and get the Application ID
+
+3. **Configure Environment Variables** in Supabase Edge Functions:
+   ```
+   VONAGE_API_KEY=your_api_key
+   VONAGE_API_SECRET=your_api_secret
+   VONAGE_APPLICATION_ID=your_application_id (for voice)
+   VONAGE_PRIVATE_KEY=your_private_key (for voice)
+   VONAGE_DEFAULT_NUMBER=your_vonage_number
+   ```
+
+### Vonage vs Twilio
+
+This app was migrated from Twilio to Vonage. Key differences:
+
+- **SMS API**: Vonage uses `https://rest.nexmo.com/sms/json` vs Twilio's REST API
+- **Voice Calls**: Vonage uses NCCO (JSON) vs Twilio's TwiML (XML)
+- **Authentication**: Vonage uses API Key/Secret vs Twilio's Account SID/Auth Token
+- **Webhooks**: Different webhook formats and structures
+
 ## Environment Variables Security
 
 **Q: Are environment variables secure when deployed?**
@@ -118,7 +148,7 @@ For Supabase, **yes, this is the intended design**:
 - You can restrict which domains can access your Supabase project
 - Supabase has built-in rate limiting and abuse protection
 
-**Never put sensitive keys** (like `SUPABASE_SERVICE_ROLE_KEY`) in client-side environment variables.
+**Never put sensitive keys** (like `SUPABASE_SERVICE_ROLE_KEY` or `VONAGE_PRIVATE_KEY`) in client-side environment variables.
 
 ## Project Structure
 
@@ -133,7 +163,7 @@ For Supabase, **yes, this is the intended design**:
 ├── hooks/                  # Custom React hooks
 ├── lib/                    # Shared utilities
 ├── public/                 # Static assets
-├── supabase/              # Database migrations
+├── supabase/              # Database migrations and functions
 └── dist/                   # Build output (generated)
 ```
 
@@ -158,6 +188,7 @@ The app uses Supabase with the following tables:
 - `message_type` (enum: 'sms' | 'voice') - Type of message
 - `status` (enum: 'pending' | 'sent' | 'failed') - Message status
 - `created_at` (timestamp)
+- `vonage_id` (text, nullable) - Vonage message/call ID for tracking
 
 ## Features in Detail
 
@@ -174,7 +205,7 @@ The app uses Supabase with the following tables:
 - Cancel pending messages
 
 ### Premium Features
-- Custom phone number selection
+- Custom Vonage phone number selection
 - Priority message delivery (planned)
 - Advanced scheduling options (planned)
 
@@ -183,14 +214,14 @@ The app uses Supabase with the following tables:
 ### Hackathon Context
 This app was built in 48 hours for the Bolt.new hackathon. Some features are mocked or simplified:
 
-- **Twilio Integration**: Currently mocked - messages are simulated
+- **Vonage Integration**: Currently mocked - messages are simulated
 - **Payment Processing**: Mock payment flow for premium features
 - **Message Delivery**: Simulated with setTimeout (would use server-side jobs in production)
 
 ### Production Considerations
 For a production deployment, you would want to:
 
-- Implement real Twilio integration with server-side API
+- Implement real Vonage integration with server-side API
 - Add proper payment processing (Stripe, etc.)
 - Use server-side job scheduling for message delivery
 - Add comprehensive error handling and validation
@@ -219,10 +250,11 @@ If you see this error on your deployed site:
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# Optional - Twilio (currently mocked)
-VITE_TWILIO_ACCOUNT_SID=AC1234567890abcdef1234567890abcdef
-VITE_TWILIO_AUTH_TOKEN=1234567890abcdef1234567890abcdef
-VITE_TWILIO_DEFAULT_NUMBER=+12312345678
+# Optional - Vonage (currently mocked)
+VITE_VONAGE_API_KEY=your_api_key
+VITE_VONAGE_API_SECRET=your_api_secret
+VITE_VONAGE_APPLICATION_ID=your_application_id
+VITE_VONAGE_DEFAULT_NUMBER=your_vonage_number
 ```
 
 ## Contributing
@@ -244,6 +276,7 @@ Apache License 2.0
 - UI components from [shadcn/ui](https://ui.shadcn.com)
 - Icons from [Lucide React](https://lucide.dev)
 - Database and auth by [Supabase](https://supabase.com)
+- SMS and Voice by [Vonage](https://vonage.com)
 - Styling with [Tailwind CSS](https://tailwindcss.com)
 - Deployed on [Netlify](https://netlify.com)
 

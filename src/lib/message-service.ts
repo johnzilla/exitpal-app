@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase'
-import { sendMessage as sendTwilioMessage } from './twilio-service'
+import { sendMessage as sendVonageMessage } from './vonage-service'
 
 export type MessageType = 'sms' | 'voice'
 export type MessageStatus = 'pending' | 'sent' | 'failed'
@@ -14,19 +14,19 @@ export interface ScheduledMessage {
   messageType: MessageType
   status: MessageStatus
   createdAt: Date
-  twilioSid?: string
+  vonageId?: string
 }
 
-// Mock function to get the Twilio number (would be environment variable in production)
-export const getDefaultTwilioNumber = () => "+12312345678"
+// Mock function to get the Vonage number (would be environment variable in production)
+export const getDefaultVonageNumber = () => "12312345678"
 
 // Mock available premium numbers
-export const getAvailableTwilioNumbers = () => [
-  { id: "1", number: "+12313456789", label: "Michigan (231)" },
-  { id: "2", number: "+18005551234", label: "Toll Free (800)" },
-  { id: "3", number: "+12125551234", label: "New York (212)" },
-  { id: "4", number: "+13105551234", label: "Los Angeles (310)" },
-  { id: "5", number: "+13125551234", label: "Chicago (312)" }
+export const getAvailableVonageNumbers = () => [
+  { id: "1", number: "12313456789", label: "Michigan (231)" },
+  { id: "2", number: "18005551234", label: "Toll Free (800)" },
+  { id: "3", number: "12125551234", label: "New York (212)" },
+  { id: "4", number: "13105551234", label: "Los Angeles (310)" },
+  { id: "5", number: "13125551234", label: "Chicago (312)" }
 ]
 
 // Convert database row to ScheduledMessage
@@ -40,7 +40,7 @@ const convertToScheduledMessage = (row: any): ScheduledMessage => ({
   messageType: row.message_type,
   status: row.status,
   createdAt: new Date(row.created_at),
-  twilioSid: row.twilio_sid
+  vonageId: row.vonage_id
 })
 
 // LocalStorage fallback functions
@@ -180,7 +180,7 @@ export const cancelMessage = async (userId: string, messageId: string): Promise<
 /**
  * Update message status using Supabase or localStorage fallback
  */
-export const updateMessageStatus = async (messageId: string, status: MessageStatus, twilioSid?: string): Promise<boolean> => {
+export const updateMessageStatus = async (messageId: string, status: MessageStatus, vonageId?: string): Promise<boolean> => {
   try {
     if (!isSupabaseConfigured()) {
       console.log('⚠️ Using localStorage for message status update (Supabase not configured)')
@@ -196,8 +196,8 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
           
           if (messageIndex !== -1) {
             messages[messageIndex].status = status
-            if (twilioSid) {
-              messages[messageIndex].twilioSid = twilioSid
+            if (vonageId) {
+              messages[messageIndex].vonageId = vonageId
             }
             localStorage.setItem(key, JSON.stringify(messages))
             return true
@@ -211,8 +211,8 @@ export const updateMessageStatus = async (messageId: string, status: MessageStat
     }
 
     const updateData: any = { status }
-    if (twilioSid) {
-      updateData.twilio_sid = twilioSid
+    if (vonageId) {
+      updateData.vonage_id = vonageId
     }
 
     const { error } = await supabase
@@ -280,7 +280,7 @@ export const subscribeToMessages = (
 }
 
 /**
- * Schedule message sending using real Twilio integration
+ * Schedule message sending using real Vonage integration
  */
 const scheduleMessageSending = (message: ScheduledMessage) => {
   const scheduledTime = new Date(message.scheduledTime).getTime()
@@ -288,11 +288,11 @@ const scheduleMessageSending = (message: ScheduledMessage) => {
   const delay = Math.max(0, scheduledTime - currentTime)
   
   setTimeout(async () => {
-    console.log(`🚀 Sending ${message.messageType} to ${message.phoneNumber}`)
+    console.log(`🚀 Sending ${message.messageType} via Vonage to ${message.phoneNumber}`)
     
     try {
-      // Use real Twilio integration
-      const result = await sendTwilioMessage(
+      // Use real Vonage integration
+      const result = await sendVonageMessage(
         message.id,
         message.messageType,
         message.phoneNumber,
@@ -300,14 +300,14 @@ const scheduleMessageSending = (message: ScheduledMessage) => {
       )
       
       if (result.success) {
-        console.log('✅ Message sent successfully:', result.twilioSid)
-        await updateMessageStatus(message.id, 'sent', result.twilioSid)
+        console.log('✅ Message sent successfully via Vonage:', result.vonageId)
+        await updateMessageStatus(message.id, 'sent', result.vonageId)
       } else {
         console.error('❌ Message failed:', result.error)
         await updateMessageStatus(message.id, 'failed')
       }
     } catch (error) {
-      console.error('💥 Error sending message:', error)
+      console.error('💥 Error sending message via Vonage:', error)
       await updateMessageStatus(message.id, 'failed')
     }
   }, delay)
@@ -322,9 +322,9 @@ const simulateMessageSending = (message: ScheduledMessage) => {
   const delay = Math.max(0, scheduledTime - currentTime)
   
   setTimeout(async () => {
-    console.log(`Simulating sending ${message.messageType} to ${message.phoneNumber}`)
+    console.log(`Simulating sending ${message.messageType} via Vonage to ${message.phoneNumber}`)
     
-    // In a real app, we would call Twilio API here
+    // In a real app, we would call Vonage API here
     const success = Math.random() > 0.1 // 90% success rate for simulation
     
     await updateMessageStatus(

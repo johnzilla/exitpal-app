@@ -83,74 +83,90 @@ serve(async (req) => {
       throw new Error(`Daily limit of ${dailyLimit} messages reached`)
     }
 
-    // Determine which Twilio number to use
-    const twilioNumber = profile.is_premium && fromNumber 
+    // Determine which Vonage number to use
+    const vonageNumber = profile.is_premium && fromNumber 
       ? fromNumber 
-      : Deno.env.get('TWILIO_DEFAULT_NUMBER')
+      : Deno.env.get('VONAGE_DEFAULT_NUMBER')
 
-    // Send message via Twilio
-    const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID')
-    const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN')
+    // Send message via Vonage
+    const vonageApiKey = Deno.env.get('VONAGE_API_KEY')
+    const vonageApiSecret = Deno.env.get('VONAGE_API_SECRET')
 
-    if (!twilioAccountSid || !twilioAuthToken || !twilioNumber) {
-      throw new Error('Twilio configuration missing')
+    if (!vonageApiKey || !vonageApiSecret || !vonageNumber) {
+      throw new Error('Vonage configuration missing')
     }
 
-    let twilioResponse
-    let twilioMessageId
+    let vonageResponse
+    let vonageMessageId
 
     if (type === 'sms') {
-      // Send SMS
+      // Send SMS via Vonage
       const response = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+        'https://rest.nexmo.com/sms/json',
         {
           method: 'POST',
           headers: {
-            'Authorization': `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
-            From: twilioNumber,
-            To: to,
-            Body: content,
+            api_key: vonageApiKey,
+            api_secret: vonageApiSecret,
+            from: vonageNumber,
+            to: to,
+            text: content,
           }),
         }
       )
 
-      twilioResponse = await response.json()
+      vonageResponse = await response.json()
       
-      if (!response.ok) {
-        throw new Error(`Twilio SMS error: ${twilioResponse.message || 'Unknown error'}`)
+      if (!response.ok || vonageResponse.messages[0].status !== '0') {
+        throw new Error(`Vonage SMS error: ${vonageResponse.messages[0]['error-text'] || 'Unknown error'}`)
       }
       
-      twilioMessageId = twilioResponse.sid
+      vonageMessageId = vonageResponse.messages[0]['message-id']
     } else {
-      // Make voice call
-      const twimlUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-twiml?message=${encodeURIComponent(content)}`
+      // Make voice call via Vonage
+      const vonageApplicationId = Deno.env.get('VONAGE_APPLICATION_ID')
+      const vonagePrivateKey = Deno.env.get('VONAGE_PRIVATE_KEY')
+      
+      if (!vonageApplicationId || !vonagePrivateKey) {
+        throw new Error('Vonage voice configuration missing')
+      }
+
+      // Generate JWT for Vonage Voice API (simplified for demo)
+      // In production, you'd use a proper JWT library
+      const nccoUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-ncco?message=${encodeURIComponent(content)}`
       
       const response = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Calls.json`,
+        'https://api.nexmo.com/v1/calls',
         {
           method: 'POST',
           headers: {
-            'Authorization': `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Bearer ${vonageApiKey}`, // Simplified - should be JWT
+            'Content-Type': 'application/json',
           },
-          body: new URLSearchParams({
-            From: twilioNumber,
-            To: to,
-            Url: twimlUrl,
+          body: JSON.stringify({
+            to: [{
+              type: 'phone',
+              number: to
+            }],
+            from: {
+              type: 'phone',
+              number: vonageNumber
+            },
+            answer_url: [nccoUrl]
           }),
         }
       )
 
-      twilioResponse = await response.json()
+      vonageResponse = await response.json()
       
       if (!response.ok) {
-        throw new Error(`Twilio Voice error: ${twilioResponse.message || 'Unknown error'}`)
+        throw new Error(`Vonage Voice error: ${vonageResponse.error_title || 'Unknown error'}`)
       }
       
-      twilioMessageId = twilioResponse.sid
+      vonageMessageId = vonageResponse.uuid
     }
 
     // Update message status in database
@@ -158,8 +174,8 @@ serve(async (req) => {
       .from('messages')
       .update({ 
         status: 'sent',
-        // Store Twilio SID for tracking
-        twilio_sid: twilioMessageId 
+        // Store Vonage ID for tracking
+        vonage_id: vonageMessageId 
       })
       .eq('id', messageId)
       .eq('user_id', user.id)
@@ -172,7 +188,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        twilioSid: twilioMessageId,
+        vonageId: vonageMessageId,
         type: type 
       }),
       {

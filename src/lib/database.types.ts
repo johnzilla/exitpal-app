@@ -20,6 +20,7 @@ export interface Database {
           message_type: 'sms' | 'voice'
           status: 'pending' | 'sent' | 'failed'
           created_at: string
+          vonage_id: string | null
         }
         Insert: {
           id?: string
@@ -31,6 +32,7 @@ export interface Database {
           message_type: 'sms' | 'voice'
           status?: 'pending' | 'sent' | 'failed'
           created_at?: string
+          vonage_id?: string | null
         }
         Update: {
           id?: string
@@ -42,6 +44,7 @@ export interface Database {
           message_type?: 'sms' | 'voice'
           status?: 'pending' | 'sent' | 'failed'
           created_at?: string
+          vonage_id?: string | null
         }
       }
       profiles: {

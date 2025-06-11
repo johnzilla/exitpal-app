@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { useAuth } from "../components/auth-provider"
-import { getAvailableTwilioNumbers } from "../lib/message-service"
+import { getAvailableVonageNumbers } from "../lib/message-service"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { CheckCircle2, CreditCard, Star } from "lucide-react"
 
@@ -19,7 +19,7 @@ export default function PremiumPage() {
   const [selectedNumberId, setSelectedNumberId] = useState<string>("")
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
   
-  const availableNumbers = getAvailableTwilioNumbers()
+  const availableNumbers = getAvailableVonageNumbers()
 
   // If user is not logged in, redirect to login
   if (!user) {
@@ -50,7 +50,7 @@ export default function PremiumPage() {
     
     toast({
       title: "Upgraded to Premium!",
-      description: "You now have access to all premium features."
+      description: "You now have access to all premium features including Vonage premium numbers."
     })
     
     setShowPaymentDialog(false)
@@ -69,7 +69,7 @@ export default function PremiumPage() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Upgrade to Premium</h1>
             <p className="text-muted-foreground">
-              Get access to exclusive features and premium phone numbers
+              Get access to exclusive features and premium Vonage phone numbers
             </p>
           </div>
           
@@ -96,7 +96,7 @@ export default function PremiumPage() {
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="mr-2 h-5 w-5 text-primary shrink-0" />
-                    <span>Default Twilio number</span>
+                    <span>Default Vonage number</span>
                   </li>
                 </ul>
               </CardContent>
@@ -125,7 +125,7 @@ export default function PremiumPage() {
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="mr-2 h-5 w-5 text-primary shrink-0" />
-                    <span>Choose from premium phone numbers</span>
+                    <span>Choose from premium Vonage numbers</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="mr-2 h-5 w-5 text-primary shrink-0" />
@@ -147,7 +147,7 @@ export default function PremiumPage() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Choose Your Premium Number</CardTitle>
+              <CardTitle>Choose Your Premium Vonage Number</CardTitle>
               <CardDescription>
                 Select a unique phone number for your scheduled messages
               </CardDescription>
@@ -170,7 +170,7 @@ export default function PremiumPage() {
               {!user.isPremium && (
                 <p className="text-muted-foreground text-sm mt-4">
                   <Star className="inline-block h-4 w-4 mr-1 text-yellow-500" />
-                  Upgrade to Premium to select a custom phone number
+                  Upgrade to Premium to select a custom Vonage phone number
                 </p>
               )}
             </CardContent>

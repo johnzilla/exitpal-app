@@ -168,7 +168,7 @@ export default function DashboardPage() {
       
       toast({
         title: "Message scheduled",
-        description: `Your ${formData.messageType} will be sent at ${format(scheduledTime, "PPpp")}.`
+        description: `Your ${formData.messageType} will be sent via Vonage at ${format(scheduledTime, "PPpp")}.`
       })
       
       // Reset the form
@@ -245,7 +245,7 @@ export default function DashboardPage() {
         {isUsingSupabase ? (
           <>
             <Database className="h-3 w-3" />
-            <span>Supabase + Twilio</span>
+            <span>Supabase + Vonage</span>
           </>
         ) : (
           <>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
               Supabase is not configured. Your data is stored locally and messages are simulated.
-              To enable real Twilio integration, configure your Supabase credentials.
+              To enable real Vonage integration, configure your Supabase credentials.
             </p>
           </div>
         )}
@@ -284,10 +284,10 @@ export default function DashboardPage() {
           <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
             <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
               <Zap className="h-4 w-4" />
-              <span className="font-medium">Twilio Integration Active</span>
+              <span className="font-medium">Vonage Integration Active</span>
             </div>
             <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-              Real SMS and voice messages will be sent via Twilio. Usage limits apply to prevent runaway costs.
+              Real SMS and voice messages will be sent via Vonage. Usage limits apply to prevent runaway costs.
             </p>
           </div>
         )}
