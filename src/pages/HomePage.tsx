@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
-import { PhoneCall, MessageSquare, Clock, Shield, ArrowRight, Zap, Bug } from 'lucide-react'
+import { PhoneCall, MessageSquare, Clock, Shield, ArrowRight, Zap, Bug, UserPlus } from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -140,7 +140,7 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3 md:gap-12 pt-12">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 md:gap-12 pt-12">
             <div className="flex flex-col items-center space-y-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 1
@@ -162,6 +162,15 @@ export default function HomePage() {
             <div className="flex flex-col items-center space-y-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 3
+              </div>
+              <h3 className="text-lg font-bold">Add ExitPal Contact</h3>
+              <p className="text-muted-foreground text-center">
+                Save the ExitPal number in your phone as "Mom", "Boss", or any trusted contact name.
+              </p>
+            </div>
+            <div className="flex flex-col items-center space-y-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                4
               </div>
               <h3 className="text-lg font-bold">Make Your Exit</h3>
               <p className="text-muted-foreground text-center">
