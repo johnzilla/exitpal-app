@@ -44,6 +44,10 @@
         button:hover {
             background: #2563eb;
         }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
         pre {
             background: #1f2937;
             color: #f9fafb;
@@ -59,12 +63,25 @@
             border-radius: 4px;
             margin: 5px 0;
         }
+        .warning {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+            color: #92400e;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🔧 Debug Vonage Integration</h1>
         <p>This tool will help us debug why your Vonage messages aren't being sent.</p>
+
+        <div class="step warning">
+            <h3>⚠️ Important: Update Configuration</h3>
+            <p>Before using this tool, you need to update the configuration below with your actual Supabase credentials:</p>
+            <pre>const SUPABASE_URL = 'https://zqpkipeoisbmlblasjxq.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key-here';</pre>
+            <p>Find these in your Supabase Dashboard → Settings → API</p>
+        </div>
 
         <div class="step">
             <h3>Step 1: Check Supabase Configuration</h3>
@@ -74,7 +91,7 @@
 
         <div class="step">
             <h3>Step 2: Test Authentication</h3>
-            <input type="email" id="email" placeholder="Your email">
+            <input type="email" id="email" placeholder="Your email" value="">
             <input type="password" id="password" placeholder="Your password">
             <button onclick="testAuth()">Test Login & Get Token</button>
             <div id="auth-result"></div>
@@ -83,30 +100,41 @@
         <div class="step">
             <h3>Step 3: Test Edge Function</h3>
             <input type="tel" id="phone" placeholder="Your phone number (e.g., +1234567890)">
-            <button onclick="testEdgeFunction()">Test Send Message Function</button>
+            <button onclick="testEdgeFunction()" id="test-function-btn" disabled>Test Send Message Function</button>
             <div id="function-result"></div>
         </div>
 
         <div class="step">
-            <h3>Step 4: Check Logs</h3>
-            <p>After running the tests above, check your Supabase Dashboard:</p>
+            <h3>Step 4: Check Detailed Logs</h3>
+            <p>After running the tests above, check your Supabase Dashboard for detailed logs:</p>
             <ol>
                 <li>Go to <strong>Edge Functions</strong> → <strong>send-message</strong></li>
                 <li>Click the <strong>Logs</strong> tab</li>
-                <li>Look for recent function calls and any error messages</li>
+                <li>Look for recent function calls with detailed console output</li>
+                <li>Pay special attention to the "📱 Vonage SMS response" log entry</li>
             </ol>
+            <button onclick="showLogInstructions()">Show Log Analysis Guide</button>
+            <div id="log-instructions"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 5: Manual Vonage Test</h3>
+            <p>If the Edge Function isn't working, we can test Vonage directly:</p>
+            <button onclick="showManualTest()">Show Manual Vonage Test</button>
+            <div id="manual-test"></div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://your-project-id.supabase.co'; // Replace with your actual URL
-        const SUPABASE_ANON_KEY = 'your-anon-key'; // Replace with your actual key
+        // ⚠️ UPDATE THESE WITH YOUR ACTUAL CREDENTIALS
+        const SUPABASE_URL = 'https://zqpkipeoisbmlblasjxq.supabase.co'; // Your actual Supabase URL
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxcGtpcGVvaXNibWxibGFzanhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM2OTQ4NzQsImV4cCI6MjA0OTI3MDg3NH0.Co26i2Ky6Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8'; // Your actual anon key
         
         let userToken = null;
 
         function log(elementId, message, type = 'info') {
             const element = document.getElementById(elementId);
-            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
             element.innerHTML = `<div class="${className}"><pre>${message}</pre></div>`;
         }
 
@@ -114,19 +142,26 @@
             const config = {
                 url: SUPABASE_URL,
                 hasUrl: SUPABASE_URL !== 'https://your-project-id.supabase.co',
-                hasKey: SUPABASE_ANON_KEY !== 'your-anon-key',
-                urlFormat: SUPABASE_URL.includes('supabase.co')
+                hasKey: SUPABASE_ANON_KEY !== 'your-anon-key-here',
+                urlFormat: SUPABASE_URL.includes('supabase.co'),
+                isPlaceholder: SUPABASE_URL.includes('your-project-id') || SUPABASE_ANON_KEY.includes('your-anon-key')
             };
 
-            if (config.hasUrl && config.hasKey && config.urlFormat) {
-                log('config-result', '✅ Supabase configuration looks good!', 'success');
+            if (config.isPlaceholder) {
+                log('config-result', `❌ Please update the configuration in this file:
+- Replace SUPABASE_URL with your actual URL
+- Replace SUPABASE_ANON_KEY with your actual key
+
+Find these in: Supabase Dashboard → Settings → API`, 'error');
+            } else if (config.hasUrl && config.hasKey && config.urlFormat) {
+                log('config-result', `✅ Supabase configuration looks good!
+URL: ${SUPABASE_URL}
+Key: ${SUPABASE_ANON_KEY.substring(0, 50)}...`, 'success');
             } else {
                 log('config-result', `❌ Configuration issues:
 - URL set: ${config.hasUrl}
 - Key set: ${config.hasKey}
-- URL format: ${config.urlFormat}
-
-Please update the SUPABASE_URL and SUPABASE_ANON_KEY in this file.`, 'error');
+- URL format: ${config.urlFormat}`, 'error');
             }
         }
 
@@ -158,17 +193,21 @@ Please update the SUPABASE_URL and SUPABASE_ANON_KEY in this file.`, 'error');
 
                 if (response.ok && data.access_token) {
                     userToken = data.access_token;
+                    document.getElementById('test-function-btn').disabled = false;
                     log('auth-result', `✅ Authentication successful!
-Access token: ${data.access_token.substring(0, 50)}...
-Token type: ${data.token_type}
-Expires in: ${data.expires_in} seconds`, 'success');
+User ID: ${data.user?.id || 'Unknown'}
+Token expires in: ${data.expires_in} seconds
+Ready to test Edge Function!`, 'success');
                 } else {
                     log('auth-result', `❌ Authentication failed:
-${JSON.stringify(data, null, 2)}`, 'error');
+Status: ${response.status}
+Error: ${data.error_description || data.msg || 'Unknown error'}
+Response: ${JSON.stringify(data, null, 2)}`, 'error');
                 }
             } catch (error) {
                 log('auth-result', `❌ Authentication error:
-${error.message}`, 'error');
+${error.message}
+Check your network connection and Supabase URL.`, 'error');
             }
         }
 
@@ -184,8 +223,21 @@ ${error.message}`, 'error');
                 return;
             }
 
+            if (!phone.startsWith('+')) {
+                log('function-result', '⚠️ Phone number should start with + (e.g., +1234567890)', 'warning');
+            }
+
             try {
                 log('function-result', '🔄 Testing edge function...');
+
+                const testPayload = {
+                    messageId: 'debug-test-' + Date.now(),
+                    to: phone,
+                    content: 'Debug test message from ExitPal - ' + new Date().toLocaleTimeString(),
+                    type: 'sms'
+                };
+
+                console.log('Sending test payload:', testPayload);
 
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/send-message`, {
                     method: 'POST',
@@ -193,35 +245,101 @@ ${error.message}`, 'error');
                         'Authorization': `Bearer ${userToken}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        messageId: 'debug-test-' + Date.now(),
-                        to: phone,
-                        content: 'Debug test message from ExitPal',
-                        type: 'sms'
-                    })
+                    body: JSON.stringify(testPayload)
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
                     log('function-result', `✅ Edge function call successful!
-Response: ${JSON.stringify(data, null, 2)}
-
-Check your phone for the test message!`, 'success');
-                } else {
-                    log('function-result', `❌ Edge function failed:
 Status: ${response.status}
 Response: ${JSON.stringify(data, null, 2)}
 
-This error will help us identify the issue.`, 'error');
+🎉 Check your phone for the test message!
+📋 Also check the Supabase logs for detailed Vonage response.`, 'success');
+                } else {
+                    log('function-result', `❌ Edge function failed:
+Status: ${response.status}
+Error: ${data.error || 'Unknown error'}
+Details: ${data.details || 'No details'}
+Full Response: ${JSON.stringify(data, null, 2)}
+
+This error will help us identify the issue.
+Check the Supabase Edge Function logs for more details.`, 'error');
                 }
             } catch (error) {
                 log('function-result', `❌ Edge function error:
 ${error.message}
 
-This suggests a network or configuration issue.`, 'error');
+This suggests a network or configuration issue.
+Check your Supabase URL and network connection.`, 'error');
             }
         }
+
+        function showLogInstructions() {
+            log('log-instructions', `📋 How to analyze Supabase Edge Function logs:
+
+1. Go to Supabase Dashboard → Edge Functions → send-message → Logs
+2. Look for recent entries (last few minutes)
+3. Find logs with these key messages:
+
+   🔧 Environment check: Shows if Vonage credentials are set
+   📤 SMS request params: Shows what we're sending to Vonage  
+   📱 Vonage SMS response: THE MOST IMPORTANT - shows Vonage's response
+   ✅ SMS sent successfully: Confirms success
+   ❌ Vonage SMS error: Shows specific error from Vonage
+
+4. Common issues to look for:
+   - Missing environment variables (VONAGE_API_KEY, etc.)
+   - Invalid phone number format
+   - Vonage account issues (insufficient balance, etc.)
+   - Authentication errors
+
+5. If you see "Vonage SMS response" with status !== '0', that's the problem!
+
+Copy the "Vonage SMS response" log and share it with me.`, 'warning');
+        }
+
+        function showManualTest() {
+            log('manual-test', `🧪 Manual Vonage API Test
+
+If the Edge Function isn't working, test Vonage directly with curl:
+
+curl -X POST https://rest.nexmo.com/sms/json \\
+  -d "api_key=YOUR_VONAGE_API_KEY" \\
+  -d "api_secret=YOUR_VONAGE_API_SECRET" \\
+  -d "from=14792659352" \\
+  -d "to=+1234567890" \\
+  -d "text=Test message from Vonage"
+
+Replace:
+- YOUR_VONAGE_API_KEY with your actual API key
+- YOUR_VONAGE_API_SECRET with your actual API secret  
+- +1234567890 with your actual phone number
+
+Expected successful response:
+{
+  "message-count": "1",
+  "messages": [
+    {
+      "to": "1234567890",
+      "message-id": "...",
+      "status": "0",
+      "remaining-balance": "...",
+      "message-price": "...",
+      "network": "..."
+    }
+  ]
+}
+
+If status is "0" = success
+If status is not "0" = error (check error-text field)`, 'warning');
+        }
+
+        // Auto-check config on load
+        window.onload = function() {
+            checkSupabaseConfig();
+        };
     </script>
 </body>
 </html>
