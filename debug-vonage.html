@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Vonage Integration</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #3b82f6;
+            background: #f8fafc;
+        }
+        .error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .success {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Debug Vonage Integration</h1>
+        <p>This tool will help us debug why your Vonage messages aren't being sent.</p>
+
+        <div class="step">
+            <h3>Step 1: Check Supabase Configuration</h3>
+            <button onclick="checkSupabaseConfig()">Check Configuration</button>
+            <div id="config-result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Test Authentication</h3>
+            <input type="email" id="email" placeholder="Your email">
+            <input type="password" id="password" placeholder="Your password">
+            <button onclick="testAuth()">Test Login & Get Token</button>
+            <div id="auth-result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Test Edge Function</h3>
+            <input type="tel" id="phone" placeholder="Your phone number (e.g., +1234567890)">
+            <button onclick="testEdgeFunction()">Test Send Message Function</button>
+            <div id="function-result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Check Logs</h3>
+            <p>After running the tests above, check your Supabase Dashboard:</p>
+            <ol>
+                <li>Go to <strong>Edge Functions</strong> → <strong>send-message</strong></li>
+                <li>Click the <strong>Logs</strong> tab</li>
+                <li>Look for recent function calls and any error messages</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://your-project-id.supabase.co'; // Replace with your actual URL
+        const SUPABASE_ANON_KEY = 'your-anon-key'; // Replace with your actual key
+        
+        let userToken = null;
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            element.innerHTML = `<div class="${className}"><pre>${message}</pre></div>`;
+        }
+
+        function checkSupabaseConfig() {
+            const config = {
+                url: SUPABASE_URL,
+                hasUrl: SUPABASE_URL !== 'https://your-project-id.supabase.co',
+                hasKey: SUPABASE_ANON_KEY !== 'your-anon-key',
+                urlFormat: SUPABASE_URL.includes('supabase.co')
+            };
+
+            if (config.hasUrl && config.hasKey && config.urlFormat) {
+                log('config-result', '✅ Supabase configuration looks good!', 'success');
+            } else {
+                log('config-result', `❌ Configuration issues:
+- URL set: ${config.hasUrl}
+- Key set: ${config.hasKey}
+- URL format: ${config.urlFormat}
+
+Please update the SUPABASE_URL and SUPABASE_ANON_KEY in this file.`, 'error');
+            }
+        }
+
+        async function testAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                log('auth-result', '❌ Please enter email and password', 'error');
+                return;
+            }
+
+            try {
+                log('auth-result', '🔄 Testing authentication...');
+
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.access_token) {
+                    userToken = data.access_token;
+                    log('auth-result', `✅ Authentication successful!
+Access token: ${data.access_token.substring(0, 50)}...
+Token type: ${data.token_type}
+Expires in: ${data.expires_in} seconds`, 'success');
+                } else {
+                    log('auth-result', `❌ Authentication failed:
+${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                log('auth-result', `❌ Authentication error:
+${error.message}`, 'error');
+            }
+        }
+
+        async function testEdgeFunction() {
+            if (!userToken) {
+                log('function-result', '❌ Please authenticate first (Step 2)', 'error');
+                return;
+            }
+
+            const phone = document.getElementById('phone').value;
+            if (!phone) {
+                log('function-result', '❌ Please enter your phone number', 'error');
+                return;
+            }
+
+            try {
+                log('function-result', '🔄 Testing edge function...');
+
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/send-message`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messageId: 'debug-test-' + Date.now(),
+                        to: phone,
+                        content: 'Debug test message from ExitPal',
+                        type: 'sms'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log('function-result', `✅ Edge function call successful!
+Response: ${JSON.stringify(data, null, 2)}
+
+Check your phone for the test message!`, 'success');
+                } else {
+                    log('function-result', `❌ Edge function failed:
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}
+
+This error will help us identify the issue.`, 'error');
+                }
+            } catch (error) {
+                log('function-result', `❌ Edge function error:
+${error.message}
+
+This suggests a network or configuration issue.`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
