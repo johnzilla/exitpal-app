@@ -70,7 +70,7 @@ ExitPal is fully **10DLC compliant** for SMS messaging in the United States:
 ### **Campaign CTA Screenshot**
 For Vonage campaign registration, the compliant Call-to-Action screenshot is available at:
 ```
-https://drive.google.com/file/d/1wofWbDe13L3S1AjrzCeurlKC2ziYZpIV/view?usp=sharing
+https://drive.google.com/file/d/15d-9-w0iWqVRjzYvvmrLgEzlcpkTOVmx/view?usp=sharing
 ```
 *This screenshot shows the complete signup flow with all required 10DLC compliance elements including SMS service notice, terms agreement, explicit user consent, and carrier disclaimer.*
 
