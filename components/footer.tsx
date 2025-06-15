@@ -15,6 +15,15 @@ export function Footer() {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Link to="/terms" className="hover:text-foreground transition-colors">
+              Terms
+            </Link>
+            <span>•</span>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
+              Privacy
+            </Link>
+          </div>
           <p className="text-center text-sm text-muted-foreground md:text-left">
             Built with
           </p>

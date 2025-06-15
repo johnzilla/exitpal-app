@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { useAuth } from "../components/auth-provider"
 import { FcGoogle } from "react-icons/fc"
+import { AlertCircle } from "lucide-react"
 
 export default function SignupPage() {
   const { signUp, signInWithGoogle } = useAuth()
@@ -19,6 +21,7 @@ export default function SignupPage() {
     confirmPassword: "",
     phone: ""
   })
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,6 +38,15 @@ export default function SignupPage() {
     console.log('🚀 Starting signup process...')
     
     // Validation
+    if (!agreedToTerms) {
+      toast({
+        variant: "destructive",
+        title: "Terms required",
+        description: "Please agree to the Terms of Service and Privacy Policy to continue."
+      })
+      return
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       console.log('❌ Password mismatch')
       toast({
@@ -109,6 +121,15 @@ export default function SignupPage() {
   }
 
   const handleGoogleSignIn = async () => {
+    if (!agreedToTerms) {
+      toast({
+        variant: "destructive",
+        title: "Terms required",
+        description: "Please agree to the Terms of Service and Privacy Policy to continue."
+      })
+      return
+    }
+
     try {
       console.log('🔍 Starting Google sign-in...')
       await signInWithGoogle()
@@ -189,7 +210,46 @@ export default function SignupPage() {
                   onChange={handleChange}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+
+              {/* 10DLC Compliance Notice */}
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                      SMS Service Notice
+                    </p>
+                    <p className="text-blue-700 dark:text-blue-300 text-xs leading-relaxed">
+                      ExitPal scheduled message service. Message and data rates may apply. 
+                      Message frequency varies. Text HELP for help. Text STOP to opt-out. 
+                      <Link to="/terms" className="underline hover:no-underline mx-1">Terms of Service</Link>
+                      <Link to="/privacy" className="underline hover:no-underline">Privacy Policy</Link>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="flex items-start space-x-2">
+                <Checkbox 
+                  id="terms" 
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                />
+                <Label htmlFor="terms" className="text-sm leading-relaxed">
+                  I agree to the{" "}
+                  <Link to="/terms" className="text-primary underline-offset-4 hover:underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link to="/privacy" className="text-primary underline-offset-4 hover:underline">
+                    Privacy Policy
+                  </Link>
+                  , and I consent to receive SMS messages as described above.
+                </Label>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting || !agreedToTerms}>
                 {isSubmitting ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
@@ -208,6 +268,7 @@ export default function SignupPage() {
               type="button" 
               className="w-full"
               onClick={handleGoogleSignIn}
+              disabled={!agreedToTerms}
             >
               <FcGoogle className="mr-2 h-4 w-4" />
               Google

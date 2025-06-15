@@ -45,6 +45,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { cn } from '@/lib/utils'
+import { Link } from 'react-router-dom'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -429,6 +430,25 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">
                       This is the number that will receive the scheduled message
                     </p>
+                  </div>
+
+                  {/* 10DLC Compliance Notice for Message Scheduling */}
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">
+                          Message Service Notice
+                        </p>
+                        <p className="text-blue-700 dark:text-blue-300 text-xs leading-relaxed">
+                          By scheduling this message, you confirm that ExitPal scheduled message service 
+                          may send SMS/voice messages to your number. Message and data rates may apply. 
+                          Message frequency varies. Text HELP for help. Text STOP to opt-out. 
+                          <Link to="/terms" className="underline hover:no-underline mx-1">Terms of Service</Link>
+                          <Link to="/privacy" className="underline hover:no-underline">Privacy Policy</Link>.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   
                   <Button type="submit" className="w-full" disabled={isLoading}>

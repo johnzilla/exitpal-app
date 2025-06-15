@@ -51,6 +51,34 @@ serve(async (req) => {
       throw new Error('Missing required fields')
     }
 
+    // Check for STOP/HELP keywords in incoming messages (for compliance)
+    const normalizedContent = content.toLowerCase().trim()
+    if (normalizedContent === 'stop') {
+      // Handle opt-out request
+      console.log(`User ${to} requested to opt out via STOP`)
+      
+      // Update user profile to mark as opted out (you might want to add this field)
+      // For now, we'll just log it and not send the message
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'User has opted out of messages' 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
+    }
+    
+    if (normalizedContent === 'help') {
+      // Handle help request - send help information instead
+      const helpMessage = "ExitPal Help: This is a scheduled message service. Text STOP to opt-out. Visit exitpal.app for more info."
+      // You could send this help message instead of the original content
+      console.log(`User ${to} requested help via HELP`)
+    }
+
     // Get user profile to check premium status and usage
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
