@@ -222,6 +222,7 @@ export default function SignupPage() {
                     <p className="text-blue-700 dark:text-blue-300 text-xs leading-relaxed">
                       ExitPal scheduled message service. Message and data rates may apply. 
                       Message frequency varies. Text HELP for help. Text STOP to opt-out. 
+                      Carriers are not liable for delayed or undelivered messages.
                       <Link to="/terms" className="underline hover:no-underline mx-1">Terms of Service</Link>
                       <Link to="/privacy" className="underline hover:no-underline">Privacy Policy</Link>.
                     </p>

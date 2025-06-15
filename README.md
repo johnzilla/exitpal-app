@@ -65,13 +65,14 @@ ExitPal is fully **10DLC compliant** for SMS messaging in the United States:
 - ✅ **Opt-out Handling**: STOP/HELP keyword detection and response
 - ✅ **User Consent**: Required agreement to terms before service use
 - ✅ **Carrier Compliance**: Meets all carrier requirements for commercial messaging
+- ✅ **Carrier Disclaimer**: "Carriers are not liable for delayed or undelivered messages"
 
 ### **Campaign CTA Screenshot**
 For Vonage campaign registration, the compliant Call-to-Action screenshot is available at:
 ```
 https://drive.google.com/file/d/1wofWbDe13L3S1AjrzCeurlKC2ziYZpIV/view?usp=sharing
 ```
-*This screenshot shows the complete signup flow with all required 10DLC compliance elements including SMS service notice, terms agreement, and explicit user consent.*
+*This screenshot shows the complete signup flow with all required 10DLC compliance elements including SMS service notice, terms agreement, explicit user consent, and carrier disclaimer.*
 
 ## 🚀 Getting Started
 
@@ -140,7 +141,7 @@ VITE_VONAGE_DEFAULT_NUMBER=your_vonage_number
 ## 📋 Legal Compliance
 
 ### SMS Service Notice
-ExitPal scheduled message service. Message and data rates may apply. Message frequency varies. Text HELP for help. Text STOP to opt-out. [Terms of Service](/terms) [Privacy Policy](/privacy).
+ExitPal scheduled message service. Message and data rates may apply. Message frequency varies. Text HELP for help. Text STOP to opt-out. Carriers are not liable for delayed or undelivered messages. [Terms of Service](/terms) [Privacy Policy](/privacy).
 
 ### Opt-out Instructions
 - Text **STOP** to any ExitPal number to opt out of all messages

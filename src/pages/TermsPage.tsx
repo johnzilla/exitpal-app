@@ -36,7 +36,8 @@ export default function TermsPage() {
                 <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <p className="text-blue-800 dark:text-blue-200 text-sm font-medium">
                     SMS Service Notice: ExitPal scheduled message service. Message and data rates may apply. 
-                    Message frequency varies. Text HELP for help. Text STOP to opt-out.
+                    Message frequency varies. Text HELP for help. Text STOP to opt-out. 
+                    Carriers are not liable for delayed or undelivered messages.
                   </p>
                 </div>
               </section>
@@ -74,6 +75,9 @@ export default function TermsPage() {
                   <p>
                     <strong>Carrier Charges:</strong> Message and data rates may apply. ExitPal is not responsible for carrier charges.
                   </p>
+                  <p>
+                    <strong>Carrier Disclaimer:</strong> Carriers are not liable for delayed or undelivered messages. Message delivery depends on carrier networks and may be affected by factors beyond ExitPal's control.
+                  </p>
                 </div>
               </section>
 
@@ -94,6 +98,7 @@ export default function TermsPage() {
                 <p className="text-muted-foreground leading-relaxed">
                   While we strive to provide reliable service, ExitPal does not guarantee 100% uptime or message delivery. 
                   Factors beyond our control, including but not limited to carrier issues, network problems, or device limitations, may affect service delivery.
+                  Carriers are not liable for delayed or undelivered messages.
                 </p>
               </section>
 
@@ -103,7 +108,8 @@ export default function TermsPage() {
                 <h2 className="text-xl font-semibold mb-3">7. Limitation of Liability</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   ExitPal shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to 
-                  loss of profits, data, use, goodwill, or other intangible losses, resulting from your use of the service.
+                  loss of profits, data, use, goodwill, or other intangible losses, resulting from your use of the service. 
+                  This includes any damages resulting from delayed or undelivered messages, as carriers are not liable for such issues.
                 </p>
               </section>
 

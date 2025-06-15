@@ -444,6 +444,7 @@ export default function DashboardPage() {
                           By scheduling this message, you confirm that ExitPal scheduled message service 
                           may send SMS/voice messages to your number. Message and data rates may apply. 
                           Message frequency varies. Text HELP for help. Text STOP to opt-out. 
+                          Carriers are not liable for delayed or undelivered messages.
                           <Link to="/terms" className="underline hover:no-underline mx-1">Terms of Service</Link>
                           <Link to="/privacy" className="underline hover:no-underline">Privacy Policy</Link>.
                         </p>
