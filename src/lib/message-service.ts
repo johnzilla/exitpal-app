@@ -17,16 +17,16 @@ export interface ScheduledMessage {
   vonageId?: string
 }
 
-// Mock function to get the Vonage number (would be environment variable in production)
-export const getDefaultVonageNumber = () => "12312345678"
+// Use your actual Vonage number
+export const getDefaultVonageNumber = () => "14792659352"
 
-// Mock available premium numbers
+// Mock available premium numbers (you can add more real numbers here if you have them)
 export const getAvailableVonageNumbers = () => [
-  { id: "1", number: "12313456789", label: "Michigan (231)" },
-  { id: "2", number: "18005551234", label: "Toll Free (800)" },
-  { id: "3", number: "12125551234", label: "New York (212)" },
-  { id: "4", number: "13105551234", label: "Los Angeles (310)" },
-  { id: "5", number: "13125551234", label: "Chicago (312)" }
+  { id: "1", number: "14792659352", label: "Primary (479)" },
+  { id: "2", number: "18005551234", label: "Toll Free (800) - Coming Soon" },
+  { id: "3", number: "12125551234", label: "New York (212) - Coming Soon" },
+  { id: "4", number: "13105551234", label: "Los Angeles (310) - Coming Soon" },
+  { id: "5", number: "13125551234", label: "Chicago (312) - Coming Soon" }
 ]
 
 // Convert database row to ScheduledMessage
@@ -287,6 +287,9 @@ const scheduleMessageSending = (message: ScheduledMessage) => {
   const currentTime = new Date().getTime()
   const delay = Math.max(0, scheduledTime - currentTime)
   
+  console.log(`📅 Scheduling ${message.messageType} for ${new Date(message.scheduledTime).toLocaleString()}`)
+  console.log(`⏰ Delay: ${Math.round(delay / 1000)} seconds`)
+  
   setTimeout(async () => {
     console.log(`🚀 Sending ${message.messageType} via Vonage to ${message.phoneNumber}`)
     
@@ -321,8 +324,12 @@ const simulateMessageSending = (message: ScheduledMessage) => {
   const currentTime = new Date().getTime()
   const delay = Math.max(0, scheduledTime - currentTime)
   
+  console.log(`📅 [DEMO] Scheduling ${message.messageType} for ${new Date(message.scheduledTime).toLocaleString()}`)
+  console.log(`⏰ [DEMO] Delay: ${Math.round(delay / 1000)} seconds`)
+  
   setTimeout(async () => {
-    console.log(`Simulating sending ${message.messageType} via Vonage to ${message.phoneNumber}`)
+    console.log(`🎭 [DEMO] Simulating ${message.messageType} to ${message.phoneNumber}`)
+    console.log(`📝 [DEMO] Content: "${message.messageContent}"`)
     
     // In a real app, we would call Vonage API here
     const success = Math.random() > 0.1 // 90% success rate for simulation
@@ -331,5 +338,11 @@ const simulateMessageSending = (message: ScheduledMessage) => {
       message.id, 
       success ? 'sent' : 'failed'
     )
+    
+    if (success) {
+      console.log('✅ [DEMO] Message marked as sent')
+    } else {
+      console.log('❌ [DEMO] Message marked as failed')
+    }
   }, delay)
 }

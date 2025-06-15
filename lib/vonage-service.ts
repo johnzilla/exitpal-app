@@ -3,8 +3,8 @@
 
 export type MessageType = 'sms' | 'voice'
 
-// Mock environment variables
-const VONAGE_DEFAULT_NUMBER = process.env.VONAGE_DEFAULT_NUMBER || '12312345678'
+// Use your actual Vonage number
+const VONAGE_DEFAULT_NUMBER = '14792659352'
 
 // Mock function to send SMS via Vonage
 export const sendSMS = async (
