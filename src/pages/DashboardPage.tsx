@@ -13,6 +13,7 @@ import { Footer } from '@/components/footer'
 import { useAuth } from '../components/auth-provider'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { UsageIndicator } from '../components/usage-indicator'
+import { VonageNumberDisplay } from '../components/vonage-number-display'
 import { 
   ScheduledMessage, 
   scheduleMessage, 
@@ -263,6 +264,9 @@ export default function DashboardPage() {
             <span>{isUsingSupabase ? 'Real-time updates' : 'Demo mode'}</span>
           </div>
         </div>
+
+        {/* Vonage Number Display */}
+        <VonageNumberDisplay />
 
         {/* Usage Indicator */}
         <UsageIndicator />
