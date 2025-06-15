@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
             background: #f5f5f5;
@@ -31,6 +31,16 @@
         .success {
             border-left-color: #10b981;
             background: #f0fdf4;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+            color: #92400e;
+        }
+        .critical {
+            background: #fecaca;
+            border-left-color: #dc2626;
+            color: #991b1b;
         }
         button {
             background: #3b82f6;
@@ -63,282 +73,315 @@
             border-radius: 4px;
             margin: 5px 0;
         }
-        .warning {
-            background: #fef3c7;
-            border-left-color: #f59e0b;
-            color: #92400e;
+        .solution {
+            background: #dbeafe;
+            border-left-color: #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .checklist {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .checklist ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .checklist li {
+            margin: 8px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 Debug Vonage Integration</h1>
-        <p>This tool will help us debug why your Vonage messages aren't being sent.</p>
+        <h1>🚨 Vonage Message Rejection Debugger</h1>
+        
+        <div class="step critical">
+            <h3>🎯 Issue Identified: Vonage Platform Rejection</h3>
+            <p><strong>Error Code:</strong> Platform acceptance (SMS API) Failed -1</p>
+            <p><strong>What this means:</strong> Vonage is rejecting your messages at the platform level, before they even reach the carrier.</p>
+        </div>
 
-        <div class="step warning">
-            <h3>⚠️ Important: Update Configuration</h3>
-            <p>Before using this tool, you need to update the configuration below with your actual Supabase credentials:</p>
-            <pre>const SUPABASE_URL = 'https://zqpkipeoisbmlblasjxq.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key-here';</pre>
-            <p>Find these in your Supabase Dashboard → Settings → API</p>
+        <div class="solution">
+            <h3>🔧 Most Likely Causes & Solutions</h3>
+            
+            <div class="checklist">
+                <h4>1. 📱 Phone Number Format Issues</h4>
+                <ul>
+                    <li><strong>Problem:</strong> Your phone number format might be incorrect</li>
+                    <li><strong>Solution:</strong> Ensure phone number is in E.164 format: <code>+1234567890</code></li>
+                    <li><strong>Check:</strong> No spaces, dashes, or parentheses</li>
+                    <li><strong>Example:</strong> ✅ <code>+13133009428</code> ❌ <code>313-300-9428</code></li>
+                </ul>
+            </div>
+
+            <div class="checklist">
+                <h4>2. 🏢 Vonage Account Configuration</h4>
+                <ul>
+                    <li><strong>Account Status:</strong> Check if your Vonage account is fully activated</li>
+                    <li><strong>SMS Enabled:</strong> Verify SMS is enabled for your account</li>
+                    <li><strong>Country Restrictions:</strong> Check if SMS is allowed to your country/region</li>
+                    <li><strong>Balance:</strong> Ensure sufficient account balance</li>
+                </ul>
+            </div>
+
+            <div class="checklist">
+                <h4>3. 📞 Sender Number Issues</h4>
+                <ul>
+                    <li><strong>Number Ownership:</strong> Verify you own/have rights to use <code>14792659352</code></li>
+                    <li><strong>Number Type:</strong> Check if it's properly configured for SMS</li>
+                    <li><strong>Compliance:</strong> Ensure number meets local regulations</li>
+                </ul>
+            </div>
+
+            <div class="checklist">
+                <h4>4. 🔐 API Credentials</h4>
+                <ul>
+                    <li><strong>API Key/Secret:</strong> Verify they're correct and active</li>
+                    <li><strong>Permissions:</strong> Check if SMS permissions are enabled</li>
+                    <li><strong>Rate Limits:</strong> Ensure you haven't exceeded API limits</li>
+                </ul>
+            </div>
         </div>
 
         <div class="step">
-            <h3>Step 1: Check Supabase Configuration</h3>
-            <button onclick="checkSupabaseConfig()">Check Configuration</button>
-            <div id="config-result"></div>
+            <h3>Step 1: Test Phone Number Format</h3>
+            <input type="tel" id="phone-test" placeholder="Enter your phone number" value="+13133009428">
+            <button onclick="validatePhoneFormat()">Validate Format</button>
+            <div id="phone-result"></div>
         </div>
 
         <div class="step">
-            <h3>Step 2: Test Authentication</h3>
-            <input type="email" id="email" placeholder="Your email" value="">
-            <input type="password" id="password" placeholder="Your password">
-            <button onclick="testAuth()">Test Login & Get Token</button>
-            <div id="auth-result"></div>
+            <h3>Step 2: Check Vonage Account Status</h3>
+            <div class="checklist">
+                <p><strong>Manual checks you need to do in your Vonage Dashboard:</strong></p>
+                <ol>
+                    <li>Go to <a href="https://dashboard.nexmo.com" target="_blank">Vonage Dashboard</a></li>
+                    <li><strong>Check Account Status:</strong> Look for any warnings or restrictions</li>
+                    <li><strong>Verify Balance:</strong> Ensure you have sufficient credit</li>
+                    <li><strong>Check SMS Settings:</strong> Go to SMS → Settings</li>
+                    <li><strong>Verify Number:</strong> Check if <code>14792659352</code> is properly configured</li>
+                    <li><strong>Review Compliance:</strong> Check for any compliance issues</li>
+                </ol>
+            </div>
+            <button onclick="showAccountChecklist()">Show Detailed Account Checklist</button>
+            <div id="account-result"></div>
         </div>
 
         <div class="step">
-            <h3>Step 3: Test Edge Function</h3>
-            <input type="tel" id="phone" placeholder="Your phone number (e.g., +1234567890)">
-            <button onclick="testEdgeFunction()" id="test-function-btn" disabled>Test Send Message Function</button>
-            <div id="function-result"></div>
+            <h3>Step 3: Test with Vonage's Test Numbers</h3>
+            <p>Vonage provides test numbers that should always work. Let's try those first:</p>
+            <button onclick="showTestNumbers()">Show Test Configuration</button>
+            <div id="test-numbers"></div>
         </div>
 
         <div class="step">
-            <h3>Step 4: Check Detailed Logs</h3>
-            <p>After running the tests above, check your Supabase Dashboard for detailed logs:</p>
-            <ol>
-                <li>Go to <strong>Edge Functions</strong> → <strong>send-message</strong></li>
-                <li>Click the <strong>Logs</strong> tab</li>
-                <li>Look for recent function calls with detailed console output</li>
-                <li>Pay special attention to the "📱 Vonage SMS response" log entry</li>
-            </ol>
-            <button onclick="showLogInstructions()">Show Log Analysis Guide</button>
-            <div id="log-instructions"></div>
+            <h3>Step 4: Alternative Solutions</h3>
+            <button onclick="showAlternatives()">Show Alternative Approaches</button>
+            <div id="alternatives"></div>
         </div>
 
         <div class="step">
-            <h3>Step 5: Manual Vonage Test</h3>
-            <p>If the Edge Function isn't working, we can test Vonage directly:</p>
-            <button onclick="showManualTest()">Show Manual Vonage Test</button>
-            <div id="manual-test"></div>
+            <h3>Step 5: Contact Vonage Support</h3>
+            <div class="checklist">
+                <p>If the above doesn't work, contact Vonage support with this information:</p>
+                <ul>
+                    <li><strong>Error:</strong> Platform acceptance (SMS API) Failed -1</li>
+                    <li><strong>API Key:</strong> [Your API Key]</li>
+                    <li><strong>From Number:</strong> 14792659352</li>
+                    <li><strong>To Number:</strong> +13133009428</li>
+                    <li><strong>Message ID:</strong> 7efc10e7-d60a-42a3-b276-64c2f0ff7003</li>
+                    <li><strong>Request:</strong> Please check why messages are being rejected at platform level</li>
+                </ul>
+            </div>
         </div>
     </div>
 
     <script>
-        // ⚠️ UPDATE THESE WITH YOUR ACTUAL CREDENTIALS
-        const SUPABASE_URL = 'https://zqpkipeoisbmlblasjxq.supabase.co'; // Your actual Supabase URL
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxcGtpcGVvaXNibWxibGFzanhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM2OTQ4NzQsImV4cCI6MjA0OTI3MDg3NH0.Co26i2Ky6Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8'; // Your actual anon key
-        
-        let userToken = null;
-
         function log(elementId, message, type = 'info') {
             const element = document.getElementById(elementId);
-            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : type === 'critical' ? 'critical' : '';
             element.innerHTML = `<div class="${className}"><pre>${message}</pre></div>`;
         }
 
-        function checkSupabaseConfig() {
-            const config = {
-                url: SUPABASE_URL,
-                hasUrl: SUPABASE_URL !== 'https://your-project-id.supabase.co',
-                hasKey: SUPABASE_ANON_KEY !== 'your-anon-key-here',
-                urlFormat: SUPABASE_URL.includes('supabase.co'),
-                isPlaceholder: SUPABASE_URL.includes('your-project-id') || SUPABASE_ANON_KEY.includes('your-anon-key')
-            };
-
-            if (config.isPlaceholder) {
-                log('config-result', `❌ Please update the configuration in this file:
-- Replace SUPABASE_URL with your actual URL
-- Replace SUPABASE_ANON_KEY with your actual key
-
-Find these in: Supabase Dashboard → Settings → API`, 'error');
-            } else if (config.hasUrl && config.hasKey && config.urlFormat) {
-                log('config-result', `✅ Supabase configuration looks good!
-URL: ${SUPABASE_URL}
-Key: ${SUPABASE_ANON_KEY.substring(0, 50)}...`, 'success');
-            } else {
-                log('config-result', `❌ Configuration issues:
-- URL set: ${config.hasUrl}
-- Key set: ${config.hasKey}
-- URL format: ${config.urlFormat}`, 'error');
-            }
-        }
-
-        async function testAuth() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                log('auth-result', '❌ Please enter email and password', 'error');
-                return;
-            }
-
-            try {
-                log('auth-result', '🔄 Testing authentication...');
-
-                const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.access_token) {
-                    userToken = data.access_token;
-                    document.getElementById('test-function-btn').disabled = false;
-                    log('auth-result', `✅ Authentication successful!
-User ID: ${data.user?.id || 'Unknown'}
-Token expires in: ${data.expires_in} seconds
-Ready to test Edge Function!`, 'success');
-                } else {
-                    log('auth-result', `❌ Authentication failed:
-Status: ${response.status}
-Error: ${data.error_description || data.msg || 'Unknown error'}
-Response: ${JSON.stringify(data, null, 2)}`, 'error');
-                }
-            } catch (error) {
-                log('auth-result', `❌ Authentication error:
-${error.message}
-Check your network connection and Supabase URL.`, 'error');
-            }
-        }
-
-        async function testEdgeFunction() {
-            if (!userToken) {
-                log('function-result', '❌ Please authenticate first (Step 2)', 'error');
-                return;
-            }
-
-            const phone = document.getElementById('phone').value;
+        function validatePhoneFormat() {
+            const phone = document.getElementById('phone-test').value.trim();
+            
             if (!phone) {
-                log('function-result', '❌ Please enter your phone number', 'error');
+                log('phone-result', '❌ Please enter a phone number', 'error');
                 return;
             }
 
+            const issues = [];
+            const suggestions = [];
+
+            // Check E.164 format
             if (!phone.startsWith('+')) {
-                log('function-result', '⚠️ Phone number should start with + (e.g., +1234567890)', 'warning');
+                issues.push('Missing + prefix');
+                suggestions.push('Add + at the beginning');
             }
 
-            try {
-                log('function-result', '🔄 Testing edge function...');
+            // Check for invalid characters
+            const cleanPhone = phone.replace('+', '');
+            if (!/^\d+$/.test(cleanPhone)) {
+                issues.push('Contains non-digit characters');
+                suggestions.push('Remove spaces, dashes, parentheses');
+            }
 
-                const testPayload = {
-                    messageId: 'debug-test-' + Date.now(),
-                    to: phone,
-                    content: 'Debug test message from ExitPal - ' + new Date().toLocaleTimeString(),
-                    type: 'sms'
-                };
+            // Check length
+            if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+                issues.push(`Invalid length: ${cleanPhone.length} digits`);
+                suggestions.push('Should be 10-15 digits');
+            }
 
-                console.log('Sending test payload:', testPayload);
+            // Check US format specifically
+            if (phone.startsWith('+1') && cleanPhone.length !== 11) {
+                issues.push('US numbers should be 11 digits (1 + 10)');
+                suggestions.push('Format: +1XXXXXXXXXX');
+            }
 
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/send-message`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${userToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(testPayload)
-                });
+            if (issues.length === 0) {
+                log('phone-result', `✅ Phone number format looks correct!
+Format: ${phone}
+Country: ${phone.startsWith('+1') ? 'US/Canada' : 'International'}
+Length: ${cleanPhone.length} digits
 
-                const data = await response.json();
+This format should work with Vonage.`, 'success');
+            } else {
+                const corrected = phone.startsWith('+1') ? phone : '+1' + phone.replace(/\D/g, '');
+                log('phone-result', `❌ Phone number format issues:
+${issues.map(issue => '• ' + issue).join('\n')}
 
-                if (response.ok) {
-                    log('function-result', `✅ Edge function call successful!
-Status: ${response.status}
-Response: ${JSON.stringify(data, null, 2)}
+Suggestions:
+${suggestions.map(suggestion => '• ' + suggestion).join('\n')}
 
-🎉 Check your phone for the test message!
-📋 Also check the Supabase logs for detailed Vonage response.`, 'success');
-                } else {
-                    log('function-result', `❌ Edge function failed:
-Status: ${response.status}
-Error: ${data.error || 'Unknown error'}
-Details: ${data.details || 'No details'}
-Full Response: ${JSON.stringify(data, null, 2)}
-
-This error will help us identify the issue.
-Check the Supabase Edge Function logs for more details.`, 'error');
-                }
-            } catch (error) {
-                log('function-result', `❌ Edge function error:
-${error.message}
-
-This suggests a network or configuration issue.
-Check your Supabase URL and network connection.`, 'error');
+Try this format: ${corrected}`, 'error');
             }
         }
 
-        function showLogInstructions() {
-            log('log-instructions', `📋 How to analyze Supabase Edge Function logs:
+        function showAccountChecklist() {
+            log('account-result', `📋 Vonage Account Checklist
 
-1. Go to Supabase Dashboard → Edge Functions → send-message → Logs
-2. Look for recent entries (last few minutes)
-3. Find logs with these key messages:
+Go to https://dashboard.nexmo.com and check:
 
-   🔧 Environment check: Shows if Vonage credentials are set
-   📤 SMS request params: Shows what we're sending to Vonage  
-   📱 Vonage SMS response: THE MOST IMPORTANT - shows Vonage's response
-   ✅ SMS sent successfully: Confirms success
-   ❌ Vonage SMS error: Shows specific error from Vonage
+🔍 ACCOUNT STATUS:
+□ Account is fully verified and active
+□ No warnings or restrictions displayed
+□ Account type supports SMS (not just voice)
 
-4. Common issues to look for:
-   - Missing environment variables (VONAGE_API_KEY, etc.)
-   - Invalid phone number format
-   - Vonage account issues (insufficient balance, etc.)
-   - Authentication errors
+💰 BILLING & BALANCE:
+□ Sufficient account balance (check top-right corner)
+□ Payment method is valid and current
+□ No billing issues or holds
 
-5. If you see "Vonage SMS response" with status !== '0', that's the problem!
+📱 SMS CONFIGURATION:
+□ SMS is enabled for your account
+□ No country restrictions for US numbers
+□ Rate limits not exceeded
 
-Copy the "Vonage SMS response" log and share it with me.`, 'warning');
+📞 NUMBER CONFIGURATION:
+□ Number 14792659352 is owned by your account
+□ Number is configured for SMS (not just voice)
+□ Number has proper SMS capabilities
+
+🌍 COMPLIANCE:
+□ Account complies with local regulations
+□ No spam or abuse flags
+□ Proper opt-in procedures if required
+
+🔐 API SETTINGS:
+□ API key and secret are correct
+□ API has SMS permissions enabled
+□ No IP restrictions blocking your requests
+
+If ANY of these show issues, that's likely your problem!`, 'warning');
         }
 
-        function showManualTest() {
-            log('manual-test', `🧪 Manual Vonage API Test
+        function showTestNumbers() {
+            log('test-numbers', `🧪 Test with Vonage Test Configuration
 
-If the Edge Function isn't working, test Vonage directly with curl:
+1. Use Vonage's test credentials (if available):
+   - Test API Key: (check Vonage docs)
+   - Test numbers that always work
 
-curl -X POST https://rest.nexmo.com/sms/json \\
-  -d "api_key=YOUR_VONAGE_API_KEY" \\
-  -d "api_secret=YOUR_VONAGE_API_SECRET" \\
-  -d "from=14792659352" \\
-  -d "to=+1234567890" \\
-  -d "text=Test message from Vonage"
+2. Try a different sender number:
+   - Use a Vonage virtual number you definitely own
+   - Or try without specifying 'from' (use default)
 
-Replace:
-- YOUR_VONAGE_API_KEY with your actual API key
-- YOUR_VONAGE_API_SECRET with your actual API secret  
-- +1234567890 with your actual phone number
+3. Test with a different recipient:
+   - Try a different phone number
+   - Use a landline vs mobile
+   - Try an international number
 
-Expected successful response:
-{
-  "message-count": "1",
-  "messages": [
-    {
-      "to": "1234567890",
-      "message-id": "...",
-      "status": "0",
-      "remaining-balance": "...",
-      "message-price": "...",
-      "network": "..."
-    }
-  ]
-}
+4. Minimal test message:
+   - Use simple text: "Test"
+   - Avoid special characters
+   - Keep it under 160 characters
 
-If status is "0" = success
-If status is not "0" = error (check error-text field)`, 'warning');
+5. Update your Edge Function to use test mode:
+
+// Add this to your Edge Function for testing
+const isTestMode = true;
+const testFromNumber = isTestMode ? 'Vonage' : vonageNumber;
+
+const smsBody = new URLSearchParams({
+  api_key: vonageApiKey,
+  api_secret: vonageApiSecret,
+  from: testFromNumber, // Use 'Vonage' for testing
+  to: to,
+  text: content,
+});`, 'warning');
         }
 
-        // Auto-check config on load
+        function showAlternatives() {
+            log('alternatives', `🔄 Alternative Solutions
+
+1. 📱 USE DIFFERENT SENDER ID:
+   Instead of a phone number, try:
+   - from: "ExitPal" (alphanumeric sender)
+   - from: "Vonage" (Vonage's default)
+   - Don't specify 'from' at all
+
+2. 🌍 TRY DIFFERENT REGIONS:
+   - Test with international numbers
+   - Use different country codes
+   - Check regional restrictions
+
+3. 🔧 SIMPLIFY THE REQUEST:
+   Minimal working example:
+   
+   curl -X POST https://rest.nexmo.com/sms/json \\
+     -d "api_key=YOUR_KEY" \\
+     -d "api_secret=YOUR_SECRET" \\
+     -d "to=13133009428" \\
+     -d "text=Test"
+   
+   (Notice: no 'from' parameter)
+
+4. 📞 SWITCH TO VOICE CALLS:
+   If SMS keeps failing, voice calls might work:
+   - Voice API has different restrictions
+   - Often more reliable for urgent messages
+   - Can be more attention-grabbing
+
+5. 🔄 USE DIFFERENT SMS PROVIDER:
+   Consider switching to:
+   - Twilio (very reliable)
+   - AWS SNS
+   - MessageBird
+   - Plivo
+
+6. 🧪 TEST ENVIRONMENT:
+   - Create a new Vonage account for testing
+   - Use Vonage's sandbox/test environment
+   - Verify with a known working setup`, 'warning');
+        }
+
+        // Auto-validate the phone number on load
         window.onload = function() {
-            checkSupabaseConfig();
+            validatePhoneFormat();
         };
     </script>
 </body>
