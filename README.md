@@ -2,12 +2,6 @@
 
 ExitPal is a web application that helps users exit awkward social situations by scheduling text or voice messages to their phone. This app was built for the **Bolt.new Hackathon 2025**.
 
-## 🚀 Live Demo
-
-**[Visit ExitPal →](https://exitpal.app)**
-
-[![Netlify Status](https://api.netlify.com/api/v1/badges/ced34ba0-22aa-4585-99cc-0622e4026b27/deploy-status)](https://app.netlify.com/projects/exitpal/deploys)
-
 ## 🏆 Hackathon Submission
 
 This project was built in **48 hours** for the **Bolt.new Hackathon 2025**, showcasing the power of AI-assisted development with modern web technologies.
